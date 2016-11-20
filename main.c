@@ -1,26 +1,19 @@
-#include "stdio.h"
 #include "defs.h"
 
 int main(){
 
   AllInit();
 
-  int index;
+	S_BOARD board[1];
 
-  for(index = 0; index < BRD_SQ_NUM; ++index){
-    if(index%10==0) printf("\n");
-    printf("%5d",Sq120ToSq64[index]);
-  }
+	ParseFen("7N/8/8/8/4K3/8/8/8 w - -",board);
+	PrintBoard(board);
 
-  printf("\n");
-  printf("\n");
+	S_MOVELIST list[1];
 
-  for(index = 0; index < 64; ++index){
-    if(index%8==0) printf("\n");
-    printf("%5d",Sq64ToSq120[index]);
-  }
+	GenerateAllMoves(board,list);
 
-  printf("\n");
+	PrintMoveList(list);
 
-  return 0;
+	return 0;
 }

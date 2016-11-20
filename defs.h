@@ -1,14 +1,17 @@
 #ifndef DEFS_H
 #define DEFS_H
 
-#include "stdlib.h"
-#include "stdio.h"
-
-typedef unsigned long long U64;
+#include <stdlib.h>
+#include <stdio.h>
+#include <stdint.h>
+#include <assert.h>
 
 #define BRD_SQ_NUM 120
 
 #define MAXGAMEMOVES 2048
+#define MAXPOSITIONMOVES 256
+
+#define START_FEN  "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w - - 0 1"
 
 enum { EMPTY, wP, wN, wB, wR, wQ, wK, bP, bN, bB, bR, bQ, bK  };
 enum { FILE_A, FILE_B, FILE_C, FILE_D, FILE_E, FILE_F, FILE_G, FILE_H, FILE_NONE };
@@ -31,45 +34,127 @@ enum { FALSE, TRUE };
 typedef struct {
 
 	int move;
-	int fiftyMove;
-	U64 posKey;
+	int score;
+
+} S_MOVE;
+
+typedef struct {
+	S_MOVE moves[MAXPOSITIONMOVES];
+	int count;
+  int capture;
+} S_MOVELIST;
+
+typedef struct {
+
+  int move;
+  int fiftyMove;
+  uint64_t posKey;
 
 } S_UNDO;
 
 typedef struct {
 
-	int pieces[BRD_SQ_NUM];
-	U64 pawns[3];
+  int pieces[BRD_SQ_NUM];
+  uint64_t pawns[3];
 
   int side;
+  int enPas;
   int fiftyMove;
 
   int ply;
   int hisPly;
 
-  U64 posKey;
+  uint64_t posKey;
 
   int pceNum[13];
-  int bigPce[3];
-  int majPce[3];
-  int minPce[3];
+  //int bigPce[3];
+  //int majPce[3];
+  //int minPce[3];
+  int material[2];
 
   S_UNDO history[MAXGAMEMOVES];
 
+  int pList[13][10];
+
 } S_BOARD;
+
+/* GAME MOVE */
+
+/*
+0000 0000 0000 0000 0000 0111 1111 -> From 0x7F
+0000 0000 0000 0011 1111 1000 0000 -> To >> 7, 0x7F
+0000 0000 0011 1100 0000 0000 0000 -> Captured >> 14, 0xF
+0000 0000 0100 0000 0000 0000 0000 -> EP 0x40000
+0000 0000 1000 0000 0000 0000 0000 -> Pawn Start 0x80000
+0000 1111 0000 0000 0000 0000 0000 -> Promoted Piece >> 20, 0xF
+*/
+
+#define FROMSQ(m) ((m) & 0x7F)
+#define TOSQ(m) (((m)>>7) & 0x7F)
+#define CAPTURED(m) (((m)>>14) & 0xF)
+#define PROMOTED(m) (((m)>>20) & 0xF)
+
+#define MFLAGEP 0x40000
+#define MFLAGPS 0x80000
+
+#define MFLAGCAP 0x7C000
+#define MFLAGPROM 0xF00000
 
 /* MACROS */
 
 #define FR2SQ(f,r) ( (21 + (f) ) + ( (r) * 10 ) )
+#define SQ64(sq120) (Sq120ToSq64[(sq120)])
+#define SQ120(sq64) (Sq64ToSq120[(sq64)])
+#define POP(b) PopBit(b)
+#define CNT(b) CountBits(b)
+#define CLRBIT(bb,sq) ((bb) &= ClearMask[(sq)])
+#define SETBIT(bb,sq) ((bb) |= SetMask[(sq)])
 
 /* GLOBALS */
 
 extern int Sq120ToSq64[BRD_SQ_NUM];
 extern int Sq64ToSq120[64];
+extern uint64_t SetMask[64];
+extern uint64_t ClearMask[64];
+extern uint64_t PieceKeys[13][120];
+extern uint64_t SideKey;
+extern char PceChar[];
+extern char SideChar[];
+extern char RankChar[];
+extern char FileChar[];
+
+extern int FilesBrd[BRD_SQ_NUM];
+extern int RanksBrd[BRD_SQ_NUM];
+
+extern int PieceVal[13];
+extern int PieceCol[13];
+extern int PiecePawn[13];
 
 /* FUNCTIONS */
 
 // init.c
 extern void AllInit();
 
+// bitboards.c
+extern void PrintBitBoard(uint64_t bb);
+extern int PopBit(uint64_t *bb);
+extern int CountBits(uint64_t b);
+
+//board.c
+extern void ResetBoard(S_BOARD *pos);
+extern void PrintBoard(const S_BOARD *pos);
+extern int  ParseFen(char *fen, S_BOARD *pos);
+void UpdateListsMaterial(S_BOARD *pos);
+
+//hashkeys.c
+extern uint64_t GeneratePosKey(const S_BOARD *pos);
+
+// move.c
+extern char *PrMove(const int move);
+extern char *PrSq(const int sq);
+extern void PrintMoveList(const S_MOVELIST *list);
+//extern int ParseMove(char *ptrChar, S_BOARD *pos);
+
+// movegen.c
+void GenerateAllMoves(const S_BOARD *pos, S_MOVELIST *list);
 #endif

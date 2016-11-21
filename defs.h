@@ -48,6 +48,7 @@ typedef struct {
 
   int move;
   int fiftyMove;
+  int enPas;
   uint64_t posKey;
 
 } S_UNDO;
@@ -157,4 +158,9 @@ extern void PrintMoveList(const S_MOVELIST *list);
 
 // movegen.c
 void GenerateAllMoves(const S_BOARD *pos, S_MOVELIST *list);
+
+// makemove.c
+extern void MakeMove(S_BOARD *pos, int move);
+extern void UndoMove(S_BOARD *pos);
+
 #endif

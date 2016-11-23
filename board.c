@@ -1,3 +1,5 @@
+//l9 - PieceVal //l23 - material // l133 - UpdateListsMaterial
+
 #include "defs.h"
 
 char PceChar[] = ".PNBRQKpnbrqk";
@@ -15,19 +17,10 @@ void UpdateListsMaterial(S_BOARD *pos) {
 	for(index = 0; index < BRD_SQ_NUM; ++index) {
 		sq = index;
 		piece = pos->pieces[index];
-		//assert(PceValidEmptyOffbrd(piece));
+
 		if(piece!=OFFBOARD && piece!= EMPTY) {
 			colour = PieceCol[piece];
-			//assert(SideValid(colour));
-
-		    // if( PieceBig[piece] == TRUE) pos->bigPce[colour]++;
-		    // if( PieceMin[piece] == TRUE) pos->minPce[colour]++;
-		    // if( PieceMaj[piece] == TRUE) pos->majPce[colour]++;
-
 			pos->material[colour] += PieceVal[piece];
-
-			//assert(pos->pceNum[piece] < 10 && pos->pceNum[piece] >= 0);
-
 			pos->pList[piece][pos->pceNum[piece]] = sq;
 			pos->pceNum[piece]++;
 
@@ -154,13 +147,6 @@ void ResetBoard(S_BOARD *pos) {
 		pos->pieces[SQ120(index)] = EMPTY;
 	}
 
-	// for(index = 0; index < 2; ++index) {
-	// 	pos->bigPce[index] = 0;
-	// 	pos->majPce[index] = 0;
-	// 	pos->minPce[index] = 0;
-	// 	pos->pawns[index] = 0;
-	// }
-
 	for(index = 0; index < 3; ++index) {
 		pos->pawns[index] = 0ULL;
 	}
@@ -179,6 +165,7 @@ void ResetBoard(S_BOARD *pos) {
 	pos->posKey = 0ULL;
 
 }
+
 void PrintBoard(const S_BOARD *pos) {
 
 	int sq,file,rank,piece;
@@ -199,8 +186,8 @@ void PrintBoard(const S_BOARD *pos) {
 	for(file = FILE_A; file <= FILE_H; file++) {
 		printf("%3c",'a'+file);
 	}
-	printf("\n");
-	printf("side:%c\n",SideChar[pos->side]);
+	printf("\n\n");
+	printf("Side:%c\n",SideChar[pos->side]);
 	printf("enPas:%d\n",pos->enPas);
-	printf("PosKey:%lX\n",pos->posKey);
+	printf("PosKey:%lX\n\n",pos->posKey);
 }

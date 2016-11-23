@@ -4,31 +4,41 @@ int main() {
 
 	AllInit();
 
-	S_BOARD board[1];
-	S_MOVELIST list[1];
+	S_BOARD pos;
+	S_MOVE move;
 
-	ParseFen("8/8/8/1p6/Pp6/2Q5/1p6/Q7 b - a3",board);
-	GenerateAllMoves(board,list);
+	ParseFen(START_FEN,&pos);
 
-	int MoveNum = 0;
-	int move = 0;
-
-	PrintBoard(board);
-	getchar();
-
-	for(MoveNum = 0; MoveNum < list->count; ++MoveNum) {
-		move = list->moves[MoveNum].move;
-
-		MakeMove(board, move);
-
-		printf("\nMADE:%s\n", PrMove(move));
-		PrintBoard(board);
-
-		UndoMove(board);
-		printf("\nTAKEN:%s\n", PrMove(move));
-		PrintBoard(board);
-
-		getchar();
+	while(1){
+		if(pos.fiftyMove >= 100){
+			printf("Sergey\n");
+			break;
+		}
+		if(pos.side == WHITE){
+			move = FindMove(&pos,3);
+		}
+		else{
+			S_MOVELIST list;
+			GenerateAllMoves(&pos,&list);
+			int n;
+			if(list.count == 0){
+				move.move = 0;
+			}
+			else{
+				for(int i = 0; i < list.count; i++) {
+					printf("#%d:%s\n",i,PrMove(list.moves[i].move));
+				}
+				printf("Give move:");
+				scanf("%d",&n);
+				move.move = list.moves[n].move;
+			}
+		}
+		if(move.move == 0){
+			 printf("gg\n");
+			 break;
+		}
+		MakeMove(&pos,move.move);
+		PrintBoard(&pos);
 	}
 
 	return 0;

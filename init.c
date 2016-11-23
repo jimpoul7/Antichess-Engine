@@ -1,5 +1,3 @@
-// init.c
-
 #include "defs.h"
 
 int Sq120ToSq64[BRD_SQ_NUM];

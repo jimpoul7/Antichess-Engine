@@ -6,10 +6,13 @@
 #include <stdint.h>
 #include <assert.h>
 
+#define NAME "TBD"
 #define BRD_SQ_NUM 120
 
 #define MAXGAMEMOVES 2048
 #define MAXPOSITIONMOVES 256
+#define MAXDEPTH 64
+#define MAX_HASH 1024
 
 #define START_FEN  "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w - - 0 1"
 
@@ -18,6 +21,7 @@ enum { FILE_A, FILE_B, FILE_C, FILE_D, FILE_E, FILE_F, FILE_G, FILE_H, FILE_NONE
 enum { RANK_1, RANK_2, RANK_3, RANK_4, RANK_5, RANK_6, RANK_7, RANK_8, RANK_NONE };
 
 enum { WHITE, BLACK, BOTH };
+//enum { UCIMODE };
 enum {
   A1 = 21, B1, C1, D1, E1, F1, G1, H1,
   A2 = 31, B2, C2, D2, E2, F2, G2, H2,
@@ -68,9 +72,6 @@ typedef struct {
   uint64_t posKey;
 
   int pceNum[13];
-  //int bigPce[3];
-  //int majPce[3];
-  //int minPce[3];
   int material[2];
 
   S_UNDO history[MAXGAMEMOVES];
@@ -78,6 +79,28 @@ typedef struct {
   int pList[13][10];
 
 } S_BOARD;
+
+typedef struct {
+
+	int starttime;
+	int stoptime;
+	int depth;
+	int timeset;
+	int movestogo;
+
+	long nodes;
+
+	int quit;
+	int stopped;
+
+	float fh;
+	float fhf;
+	int nullCut;
+
+	int GAME_MODE;
+	int POST_THINKING;
+
+} S_SEARCHINFO;
 
 /* GAME MOVE */
 
@@ -100,6 +123,8 @@ typedef struct {
 
 #define MFLAGCAP 0x7C000
 #define MFLAGPROM 0xF00000
+
+#define NOMOVE 0
 
 /* MACROS */
 
@@ -154,7 +179,7 @@ extern uint64_t GeneratePosKey(const S_BOARD *pos);
 extern char *PrMove(const int move);
 extern char *PrSq(const int sq);
 extern void PrintMoveList(const S_MOVELIST *list);
-//extern int ParseMove(char *ptrChar, S_BOARD *pos);
+extern int ParseMove(char *ptrChar, S_BOARD *pos);
 
 // movegen.c
 void GenerateAllMoves(const S_BOARD *pos, S_MOVELIST *list);
@@ -162,5 +187,16 @@ void GenerateAllMoves(const S_BOARD *pos, S_MOVELIST *list);
 // makemove.c
 extern void MakeMove(S_BOARD *pos, int move);
 extern void UndoMove(S_BOARD *pos);
+
+//evaluation.c
+extern int Eval(S_BOARD *pos);
+
+//search.c
+extern S_MOVE FindMove(S_BOARD *pos, int depth);
+
+//uci.c
+//extern void ParseGo(char* line, S_SEARCHINFO *info, S_BOARD *pos);
+//extern void ParsePosition(char* lineIn, S_BOARD *pos);
+//extern void Uci_Loop(S_BOARD *pos, S_SEARCHINFO *info);
 
 #endif

@@ -1,5 +1,3 @@
-// bitboards.c
-
 #include "defs.h"
 
 const int BitTable[64] = {

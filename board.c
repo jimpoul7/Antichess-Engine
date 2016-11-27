@@ -4,7 +4,7 @@ char PceChar[] = ".PNBRQKpnbrqk";
 char SideChar[] = "wb-";
 char RankChar[] = "12345678";
 char FileChar[] = "abcdefgh";
-int PieceVal[13]= { 0, 100, 325, 325, 550, 1000, 50000, 100, 325, 325, 550, 1000, 50000  };
+int PieceVal[13]= { 0, -100, -500, -900, -300, -400, -50, -100, -500, -900, -300, -400, -50  };
 int PieceCol[13] = { BOTH, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE,
 	BLACK, BLACK, BLACK, BLACK, BLACK, BLACK };
 

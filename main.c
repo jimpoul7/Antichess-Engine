@@ -62,11 +62,11 @@ void CheckMoveGen(){
 		//GenerateAllMoves(&pos,&list);
 		//PrintMoveList(&list);
 		//abort();
-		for(int i = 1; i <= 7; i++){
+		for(int i = 1; i <= 6; i++){
 			start = clock();
 			moves = FindMoves(&pos, i);
-			printf("%d ", moves);
-			//printf("%lf ", ((double)clock()-start)/CLOCKS_PER_SEC);
+			//printf("%d ", moves);
+			printf("%lf ", ((double)clock()-start)/CLOCKS_PER_SEC);
 		}
 		printf("\n");
 	}
@@ -76,7 +76,8 @@ int main() {
 
 	AllInit();
 
-	Play(14);
+	Play(10);
+	//CheckMoveGen();
 
 	return 0;
 }

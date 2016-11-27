@@ -1,0 +1,356 @@
+Flat profile:
+
+Each sample counts as 0.01 seconds.
+  %   cumulative   self              self     total           
+ time   seconds   seconds    calls  ms/call  ms/call  name    
+ 22.08      1.00     1.00  8916215     0.00     0.00  ProbeHashEntry
+ 14.69      1.67     0.67      806     0.83     4.65  Eval
+ 14.35      2.32     0.65        1   650.24   650.24  InitHashTable
+  8.39      2.70     0.38  5952749     0.00     0.00  GenerateMoves
+  6.07      2.97     0.28 177405745     0.00     0.00  PopBit
+  5.52      3.22     0.25 13375820     0.00     0.00  ParseMove
+  3.31      3.37     0.15 31022291     0.00     0.00  KingSquares
+  3.31      3.52     0.15  8113960     0.00     0.00  GenerateAllMoves
+  3.31      3.67     0.15  8916215     0.00     0.00  UndoMove
+  3.09      3.81     0.14 47863497     0.00     0.00  RookSquares
+  3.09      3.95     0.14  8916293     0.00     0.00  MakeMove
+  2.54      4.07     0.12 10889222     0.00     0.00  CaptureSquares
+  2.10      4.16     0.10 34024877     0.00     0.00  KnightSquares
+  1.77      4.24     0.08 27503476     0.00     0.00  BishopSquares
+  1.33      4.30     0.06                             AllInit
+  1.10      4.35     0.05                             InitSorcery
+  0.66      4.38     0.03 16311637     0.00     0.00  BPawnEatSquares
+  0.66      4.41     0.03  2661989     0.00     0.00  StoreHashEntry
+  0.55      4.44     0.03 13963073     0.00     0.00  WPawnEatSquares
+  0.55      4.46     0.03 10889222     0.00     0.00  CountBits
+  0.44      4.48     0.02  8464089     0.00     0.00  BPawnMoveSquares
+  0.44      4.50     0.02  1176570     0.00     0.00  GenerateCaptures
+  0.44      4.52     0.02                             __popcountdi2
+  0.22      4.53     0.01  9394158     0.00     0.00  WPawnMoveSquares
+  0.00      4.53     0.00     5248     0.00     0.00  initmagicmoves_Bmoves
+  0.00      4.53     0.00       79     0.00    47.49  FindBestMove
+  0.00      4.53     0.00       79     0.00     0.00  PrintBoard
+  0.00      4.53     0.00        1     0.00     0.00  GeneratePosKey
+  0.00      4.53     0.00        1     0.00   650.24  ParseFen
+
+ %         the percentage of the total running time of the
+time       program used by this function.
+
+cumulative a running sum of the number of seconds accounted
+ seconds   for by this function and those listed above it.
+
+ self      the number of seconds accounted for by this
+seconds    function alone.  This is the major sort for this
+           listing.
+
+calls      the number of times this function was invoked, if
+           this function is profiled, else blank.
+
+ self      the average number of milliseconds spent in this
+ms/call    function per call, if this function is profiled,
+	   else blank.
+
+ total     the average number of milliseconds spent in this
+ms/call    function and its descendents per call, if this
+	   function is profiled, else blank.
+
+name       the name of the function.  This is the minor sort
+           for this listing. The index shows the location of
+	   the function in the gprof listing. If the index is
+	   in parenthesis it shows where it would appear in
+	   the gprof listing if it were to be printed.
+
+Copyright (C) 2012-2015 Free Software Foundation, Inc.
+
+Copying and distribution of this file, with or without modification,
+are permitted in any medium without royalty provided the copyright
+notice and this notice are preserved.
+
+		     Call graph (explanation follows)
+
+
+granularity: each sample hit covers 2 byte(s) for 0.22% of 4.53 seconds
+
+index % time    self  children    called     name
+                                                 <spontaneous>
+[1]     97.1    0.00    4.40                 Play [1]
+                0.00    3.75      79/79          FindBestMove [2]
+                0.00    0.65       1/1           ParseFen [8]
+                0.00    0.00      78/8916293     MakeMove [15]
+                0.00    0.00      79/79          PrintBoard [29]
+-----------------------------------------------
+                0.00    3.75      79/79          Play [1]
+[2]     82.8    0.00    3.75      79         FindBestMove [2]
+                0.67    3.09     806/806         Eval [3]
+                0.00    0.00      79/8113960     GenerateAllMoves [4]
+                0.00    0.00     806/8916215     UndoMove [13]
+                0.00    0.00     806/8916293     MakeMove [15]
+-----------------------------------------------
+                             14360020             Eval [3]
+                0.67    3.09     806/806         FindBestMove [2]
+[3]     82.8    0.67    3.09     806+14360020 Eval [3]
+                0.15    1.26 8113881/8113960     GenerateAllMoves [4]
+                1.00    0.00 8916215/8916215     ProbeHashEntry [5]
+                0.12    0.21 10889222/10889222     CaptureSquares [10]
+                0.15    0.00 8915409/8916215     UndoMove [13]
+                0.14    0.00 8915409/8916293     MakeMove [15]
+                0.03    0.00 2661989/2661989     StoreHashEntry [22]
+                0.03    0.00 10889222/10889222     CountBits [24]
+                             14360020             Eval [3]
+-----------------------------------------------
+                0.00    0.00      79/8113960     FindBestMove [2]
+                0.15    1.26 8113881/8113960     Eval [3]
+[4]     31.2    0.15    1.26 8113960         GenerateAllMoves [4]
+                0.38    0.42 5952749/5952749     GenerateMoves [6]
+                0.17    0.18 9067864/13375820     ParseMove [9]
+                0.02    0.07 1176570/1176570     GenerateCaptures [17]
+                0.01    0.00 1145780/31022291     KingSquares [12]
+                0.01    0.00 2757718/16311637     BPawnEatSquares [21]
+                0.00    0.00 2545803/177405745     PopBit [11]
+                0.00    0.00 1145780/47863497     RookSquares [14]
+                0.00    0.00 1145780/27503476     BishopSquares [18]
+                0.00    0.00 1145780/34024877     KnightSquares [16]
+                0.00    0.00  585318/13963073     WPawnEatSquares [23]
+-----------------------------------------------
+                1.00    0.00 8916215/8916215     Eval [3]
+[5]     22.1    1.00    0.00 8916215         ProbeHashEntry [5]
+-----------------------------------------------
+                0.38    0.42 5952749/5952749     GenerateAllMoves [4]
+[6]     17.6    0.38    0.42 5952749         GenerateMoves [6]
+                0.19    0.00 120432172/177405745     PopBit [11]
+                0.06    0.06 3131386/13375820     ParseMove [9]
+                0.02    0.00 8533682/47863497     RookSquares [14]
+                0.02    0.00 4278153/31022291     KingSquares [12]
+                0.02    0.00 7280739/34024877     KnightSquares [16]
+                0.02    0.00 8464089/8464089     BPawnMoveSquares [25]
+                0.01    0.00 4497555/27503476     BishopSquares [18]
+                0.01    0.00 9394158/9394158     WPawnMoveSquares [27]
+-----------------------------------------------
+                0.65    0.00       1/1           ParseFen [8]
+[7]     14.3    0.65    0.00       1         InitHashTable [7]
+-----------------------------------------------
+                0.00    0.65       1/1           Play [1]
+[8]     14.3    0.00    0.65       1         ParseFen [8]
+                0.65    0.00       1/1           InitHashTable [7]
+                0.00    0.00       1/1           GeneratePosKey [30]
+-----------------------------------------------
+                0.02    0.02 1176570/13375820     GenerateCaptures [17]
+                0.06    0.06 3131386/13375820     GenerateMoves [6]
+                0.17    0.18 9067864/13375820     GenerateAllMoves [4]
+[9]     11.4    0.25    0.27 13375820         ParseMove [9]
+                0.06    0.00 13375820/31022291     KingSquares [12]
+                0.06    0.00 20658970/47863497     RookSquares [14]
+                0.05    0.00 29047856/177405745     PopBit [11]
+                0.04    0.00 13375820/34024877     KnightSquares [16]
+                0.03    0.00 11749477/27503476     BishopSquares [18]
+                0.01    0.00 8106208/16311637     BPawnEatSquares [21]
+                0.01    0.00 5269612/13963073     WPawnEatSquares [23]
+-----------------------------------------------
+                0.12    0.21 10889222/10889222     Eval [3]
+[10]     7.2    0.12    0.21 10889222         CaptureSquares [10]
+                0.05    0.00 10889222/31022291     KingSquares [12]
+                0.05    0.00 16191749/47863497     RookSquares [14]
+                0.03    0.00 22560651/177405745     PopBit [11]
+                0.03    0.00 10889222/34024877     KnightSquares [16]
+                0.03    0.00 8777348/27503476     BishopSquares [18]
+                0.01    0.00 5444611/16311637     BPawnEatSquares [21]
+                0.01    0.00 5444611/13963073     WPawnEatSquares [23]
+-----------------------------------------------
+                0.00    0.00 2545803/177405745     GenerateAllMoves [4]
+                0.00    0.00 2819263/177405745     GenerateCaptures [17]
+                0.03    0.00 22560651/177405745     CaptureSquares [10]
+                0.05    0.00 29047856/177405745     ParseMove [9]
+                0.19    0.00 120432172/177405745     GenerateMoves [6]
+[11]     6.1    0.28    0.00 177405745         PopBit [11]
+-----------------------------------------------
+                0.01    0.00 1145780/31022291     GenerateAllMoves [4]
+                0.01    0.00 1333316/31022291     GenerateCaptures [17]
+                0.02    0.00 4278153/31022291     GenerateMoves [6]
+                0.05    0.00 10889222/31022291     CaptureSquares [10]
+                0.06    0.00 13375820/31022291     ParseMove [9]
+[12]     3.3    0.15    0.00 31022291         KingSquares [12]
+-----------------------------------------------
+                0.00    0.00     806/8916215     FindBestMove [2]
+                0.15    0.00 8915409/8916215     Eval [3]
+[13]     3.3    0.15    0.00 8916215         UndoMove [13]
+-----------------------------------------------
+                0.00    0.00 1145780/47863497     GenerateAllMoves [4]
+                0.00    0.00 1333316/47863497     GenerateCaptures [17]
+                0.02    0.00 8533682/47863497     GenerateMoves [6]
+                0.05    0.00 16191749/47863497     CaptureSquares [10]
+                0.06    0.00 20658970/47863497     ParseMove [9]
+[14]     3.1    0.14    0.00 47863497         RookSquares [14]
+-----------------------------------------------
+                0.00    0.00      78/8916293     Play [1]
+                0.00    0.00     806/8916293     FindBestMove [2]
+                0.14    0.00 8915409/8916293     Eval [3]
+[15]     3.1    0.14    0.00 8916293         MakeMove [15]
+-----------------------------------------------
+                0.00    0.00 1145780/34024877     GenerateAllMoves [4]
+                0.00    0.00 1333316/34024877     GenerateCaptures [17]
+                0.02    0.00 7280739/34024877     GenerateMoves [6]
+                0.03    0.00 10889222/34024877     CaptureSquares [10]
+                0.04    0.00 13375820/34024877     ParseMove [9]
+[16]     2.1    0.10    0.00 34024877         KnightSquares [16]
+-----------------------------------------------
+                0.02    0.07 1176570/1176570     GenerateAllMoves [4]
+[17]     2.0    0.02    0.07 1176570         GenerateCaptures [17]
+                0.02    0.02 1176570/13375820     ParseMove [9]
+                0.01    0.00 1333316/31022291     KingSquares [12]
+                0.00    0.00 2663532/13963073     WPawnEatSquares [23]
+                0.00    0.00 2819263/177405745     PopBit [11]
+                0.00    0.00 1333316/47863497     RookSquares [14]
+                0.00    0.00 1333316/27503476     BishopSquares [18]
+                0.00    0.00 1333316/34024877     KnightSquares [16]
+                0.00    0.00    3100/16311637     BPawnEatSquares [21]
+-----------------------------------------------
+                0.00    0.00 1145780/27503476     GenerateAllMoves [4]
+                0.00    0.00 1333316/27503476     GenerateCaptures [17]
+                0.01    0.00 4497555/27503476     GenerateMoves [6]
+                0.03    0.00 8777348/27503476     CaptureSquares [10]
+                0.03    0.00 11749477/27503476     ParseMove [9]
+[18]     1.8    0.08    0.00 27503476         BishopSquares [18]
+-----------------------------------------------
+                                                 <spontaneous>
+[19]     1.3    0.06    0.00                 AllInit [19]
+-----------------------------------------------
+                                                 <spontaneous>
+[20]     1.1    0.05    0.00                 InitSorcery [20]
+-----------------------------------------------
+                0.00    0.00    3100/16311637     GenerateCaptures [17]
+                0.01    0.00 2757718/16311637     GenerateAllMoves [4]
+                0.01    0.00 5444611/16311637     CaptureSquares [10]
+                0.01    0.00 8106208/16311637     ParseMove [9]
+[21]     0.7    0.03    0.00 16311637         BPawnEatSquares [21]
+-----------------------------------------------
+                0.03    0.00 2661989/2661989     Eval [3]
+[22]     0.7    0.03    0.00 2661989         StoreHashEntry [22]
+-----------------------------------------------
+                0.00    0.00  585318/13963073     GenerateAllMoves [4]
+                0.00    0.00 2663532/13963073     GenerateCaptures [17]
+                0.01    0.00 5269612/13963073     ParseMove [9]
+                0.01    0.00 5444611/13963073     CaptureSquares [10]
+[23]     0.6    0.03    0.00 13963073         WPawnEatSquares [23]
+-----------------------------------------------
+                0.03    0.00 10889222/10889222     Eval [3]
+[24]     0.6    0.03    0.00 10889222         CountBits [24]
+-----------------------------------------------
+                0.02    0.00 8464089/8464089     GenerateMoves [6]
+[25]     0.4    0.02    0.00 8464089         BPawnMoveSquares [25]
+-----------------------------------------------
+                                                 <spontaneous>
+[26]     0.4    0.02    0.00                 __popcountdi2 [26]
+-----------------------------------------------
+                0.01    0.00 9394158/9394158     GenerateMoves [6]
+[27]     0.2    0.01    0.00 9394158         WPawnMoveSquares [27]
+-----------------------------------------------
+                0.00    0.00    5248/5248        InitDB [37]
+[28]     0.0    0.00    0.00    5248         initmagicmoves_Bmoves [28]
+-----------------------------------------------
+                0.00    0.00      79/79          Play [1]
+[29]     0.0    0.00    0.00      79         PrintBoard [29]
+-----------------------------------------------
+                0.00    0.00       1/1           ParseFen [8]
+[30]     0.0    0.00    0.00       1         GeneratePosKey [30]
+-----------------------------------------------
+
+ This table describes the call tree of the program, and was sorted by
+ the total amount of time spent in each function and its children.
+
+ Each entry in this table consists of several lines.  The line with the
+ index number at the left hand margin lists the current function.
+ The lines above it list the functions that called this function,
+ and the lines below it list the functions this one called.
+ This line lists:
+     index	A unique number given to each element of the table.
+		Index numbers are sorted numerically.
+		The index number is printed next to every function name so
+		it is easier to look up where the function is in the table.
+
+     % time	This is the percentage of the `total' time that was spent
+		in this function and its children.  Note that due to
+		different viewpoints, functions excluded by options, etc,
+		these numbers will NOT add up to 100%.
+
+     self	This is the total amount of time spent in this function.
+
+     children	This is the total amount of time propagated into this
+		function by its children.
+
+     called	This is the number of times the function was called.
+		If the function called itself recursively, the number
+		only includes non-recursive calls, and is followed by
+		a `+' and the number of recursive calls.
+
+     name	The name of the current function.  The index number is
+		printed after it.  If the function is a member of a
+		cycle, the cycle number is printed between the
+		function's name and the index number.
+
+
+ For the function's parents, the fields have the following meanings:
+
+     self	This is the amount of time that was propagated directly
+		from the function into this parent.
+
+     children	This is the amount of time that was propagated from
+		the function's children into this parent.
+
+     called	This is the number of times this parent called the
+		function `/' the total number of times the function
+		was called.  Recursive calls to the function are not
+		included in the number after the `/'.
+
+     name	This is the name of the parent.  The parent's index
+		number is printed after it.  If the parent is a
+		member of a cycle, the cycle number is printed between
+		the name and the index number.
+
+ If the parents of the function cannot be determined, the word
+ `<spontaneous>' is printed in the `name' field, and all the other
+ fields are blank.
+
+ For the function's children, the fields have the following meanings:
+
+     self	This is the amount of time that was propagated directly
+		from the child into the function.
+
+     children	This is the amount of time that was propagated from the
+		child's children to the function.
+
+     called	This is the number of times the function called
+		this child `/' the total number of times the child
+		was called.  Recursive calls by the child are not
+		listed in the number after the `/'.
+
+     name	This is the name of the child.  The child's index
+		number is printed after it.  If the child is a
+		member of a cycle, the cycle number is printed
+		between the name and the index number.
+
+ If there are any cycles (circles) in the call graph, there is an
+ entry for the cycle-as-a-whole.  This entry shows who called the
+ cycle (as parents) and the members of the cycle (as children.)
+ The `+' recursive calls entry shows the number of function calls that
+ were internal to the cycle, and the calls entry for each member shows,
+ for that member, how many times it was called from other members of
+ the cycle.
+
+Copyright (C) 2012-2015 Free Software Foundation, Inc.
+
+Copying and distribution of this file, with or without modification,
+are permitted in any medium without royalty provided the copyright
+notice and this notice are preserved.
+
+Index by function name
+
+  [19] AllInit                 [6] GenerateMoves          [29] PrintBoard
+  [21] BPawnEatSquares        [30] GeneratePosKey          [5] ProbeHashEntry
+  [25] BPawnMoveSquares        [7] InitHashTable          [14] RookSquares
+  [18] BishopSquares          [20] InitSorcery            [22] StoreHashEntry
+  [10] CaptureSquares         [12] KingSquares            [13] UndoMove
+  [24] CountBits              [16] KnightSquares          [23] WPawnEatSquares
+   [3] Eval                   [15] MakeMove               [27] WPawnMoveSquares
+   [2] FindBestMove            [8] ParseFen               [26] __popcountdi2
+   [4] GenerateAllMoves        [9] ParseMove              [28] initmagicmoves_Bmoves
+  [17] GenerateCaptures       [11] PopBit

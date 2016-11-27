@@ -217,6 +217,8 @@ extern int Eval(S_BOARD *pos);
 //search.c
 extern S_MOVE FindBestMove(S_BOARD *pos, int depth);
 extern int FindMoves(S_BOARD *pos, int i);
+extern int IsRepetition(const S_BOARD *pos);
+extern void OrderMoves(S_MOVELIST *list);
 
 //uci.c
 //extern void ParseGo(char* line, S_SEARCHINFO *info, S_BOARD *pos);

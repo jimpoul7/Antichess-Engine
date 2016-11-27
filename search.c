@@ -7,6 +7,7 @@ int minimax(S_BOARD *pos, int depth, int a, int b){
   nodes++;
 
   if(pos->fiftyMove >= 100) return 0;
+  //if(IsRepetition(pos)) return 0;
 
   int abchanged = 0;
   S_MOVELIST list;
@@ -19,6 +20,7 @@ int minimax(S_BOARD *pos, int depth, int a, int b){
     abchanged = 0;
   }
   GenerateAllMoves(pos,&list);
+  OrderMoves(&list);
   int num_of_moves = list.count;
   int move = 0;
 
@@ -98,6 +100,7 @@ S_MOVE FindBestMove(S_BOARD *pos, int depth){
 
   S_MOVELIST list;
   GenerateAllMoves(pos,&list);
+  OrderMoves(&list);
   int num_of_moves = list.count;
   int move = 0,best_move=0;
   S_MOVE bm;
@@ -175,4 +178,31 @@ int FindMoves(S_BOARD *pos, int depth){
 		UndoMove(pos);
 	}
   return total;
+}
+
+int IsRepetition(const S_BOARD *pos) {
+
+	int i = 0;
+
+	for(i = pos->hisPly - pos->fiftyMove; i < pos->hisPly-1; i++) {
+
+		if(pos->posKey == pos->history[i].posKey) {
+			return 1;
+		}
+	}
+	return 0;
+}
+
+void OrderMoves(S_MOVELIST *list){
+
+  S_MOVE tmp;
+  for(int i = 1; i < list->count; i++){
+    int j = i;
+    while (j > 0 && list->moves[j-1].score < list->moves[j].score){
+      tmp = list->moves[j];
+      list->moves[j] = list->moves[j-1];
+      list->moves[j-1] = tmp;
+      j--;
+    }
+  }
 }

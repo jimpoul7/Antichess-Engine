@@ -7,7 +7,7 @@
 #include <assert.h>
 
 #define NAME "TBD"
-#define BRD_SQ_NUM 120
+#define BRD_SQ_NUM 64
 
 #define MAXGAMEMOVES 2048
 #define MAXPOSITIONMOVES 256
@@ -23,17 +23,34 @@ enum { RANK_1, RANK_2, RANK_3, RANK_4, RANK_5, RANK_6, RANK_7, RANK_8, RANK_NONE
 enum { WHITE, BLACK, BOTH };
 //enum { UCIMODE };
 enum {
-  A1 = 21, B1, C1, D1, E1, F1, G1, H1,
-  A2 = 31, B2, C2, D2, E2, F2, G2, H2,
-  A3 = 41, B3, C3, D3, E3, F3, G3, H3,
-  A4 = 51, B4, C4, D4, E4, F4, G4, H4,
-  A5 = 61, B5, C5, D5, E5, F5, G5, H5,
-  A6 = 71, B6, C6, D6, E6, F6, G6, H6,
-  A7 = 81, B7, C7, D7, E7, F7, G7, H7,
-  A8 = 91, B8, C8, D8, E8, F8, G8, H8, NO_SQ, OFFBOARD
+  A1 = 0, B1, C1, D1, E1, F1, G1, H1,
+  A2, B2, C2, D2, E2, F2, G2, H2,
+  A3, B3, C3, D3, E3, F3, G3, H3,
+  A4, B4, C4, D4, E4, F4, G4, H4,
+  A5, B5, C5, D5, E5, F5, G5, H5,
+  A6, B6, C6, D6, E6, F6, G6, H6,
+  A7, B7, C7, D7, E7, F7, G7, H7,
+  A8, B8, C8, D8, E8, F8, G8, H8, NO_SQ, OFFBOARD
 };
 
-enum { FALSE, TRUE };
+enum { HFNONE, HFALPHA, HFBETA, HFEXACT};
+
+typedef struct {
+	uint64_t posKey;
+	//int move;
+	int score;
+	int depth;
+	int flags;
+} S_HASHENTRY;
+
+typedef struct {
+	S_HASHENTRY *pTable;
+	int numofEntries;
+	int newWrite;
+	int overWrite;
+	int hit;
+	int cut;
+} S_HASHTABLE;
 
 typedef struct {
 
@@ -60,7 +77,9 @@ typedef struct {
 typedef struct {
 
   int pieces[BRD_SQ_NUM];
-  uint64_t pawns[3];
+
+  uint64_t occupied[3];
+  uint64_t bitboards[13];
 
   int side;
   int enPas;
@@ -75,8 +94,7 @@ typedef struct {
   int material[2];
 
   S_UNDO history[MAXGAMEMOVES];
-
-  int pList[13][10];
+  S_HASHTABLE *HashTable;
 
 } S_BOARD;
 
@@ -128,9 +146,7 @@ typedef struct {
 
 /* MACROS */
 
-#define FR2SQ(f,r) ( (21 + (f) ) + ( (r) * 10 ) )
-#define SQ64(sq120) (Sq120ToSq64[(sq120)])
-#define SQ120(sq64) (Sq64ToSq120[(sq64)])
+#define FR2SQ(f,r) ( 8*r+f )
 #define POP(b) PopBit(b)
 #define CNT(b) CountBits(b)
 #define CLRBIT(bb,sq) ((bb) &= ClearMask[(sq)])
@@ -138,11 +154,9 @@ typedef struct {
 
 /* GLOBALS */
 
-extern int Sq120ToSq64[BRD_SQ_NUM];
-extern int Sq64ToSq120[64];
 extern uint64_t SetMask[64];
 extern uint64_t ClearMask[64];
-extern uint64_t PieceKeys[13][120];
+extern uint64_t PieceKeys[13][64];
 extern uint64_t SideKey;
 extern char PceChar[];
 extern char SideChar[];
@@ -154,7 +168,7 @@ extern int RanksBrd[BRD_SQ_NUM];
 
 extern int PieceVal[13];
 extern int PieceCol[13];
-extern int PiecePawn[13];
+extern long int nodes;
 
 /* FUNCTIONS */
 
@@ -165,6 +179,14 @@ extern void AllInit();
 extern void PrintBitBoard(uint64_t bb);
 extern int PopBit(uint64_t *bb);
 extern int CountBits(uint64_t b);
+extern uint64_t KingSquares(uint64_t b);
+extern uint64_t KnightSquares(uint64_t b);
+extern uint64_t WPawnEatSquares(uint64_t b);
+extern uint64_t BPawnEatSquares(uint64_t b);
+extern uint64_t WPawnMoveSquares(uint64_t b);
+extern uint64_t BPawnMoveSquares(uint64_t b);
+extern uint64_t WPawnJumpSquares(uint64_t b);
+extern uint64_t BPawnJumpSquares(uint64_t b);
 
 //board.c
 extern void ResetBoard(S_BOARD *pos);
@@ -183,6 +205,7 @@ extern int ParseMove(char *ptrChar, S_BOARD *pos);
 
 // movegen.c
 void GenerateAllMoves(const S_BOARD *pos, S_MOVELIST *list);
+uint64_t CaptureSquares(const S_BOARD *pos, int side);
 
 // makemove.c
 extern void MakeMove(S_BOARD *pos, int move);
@@ -192,11 +215,22 @@ extern void UndoMove(S_BOARD *pos);
 extern int Eval(S_BOARD *pos);
 
 //search.c
-extern S_MOVE FindMove(S_BOARD *pos, int depth);
+extern S_MOVE FindBestMove(S_BOARD *pos, int depth);
+extern int FindMoves(S_BOARD *pos, int i);
 
 //uci.c
 //extern void ParseGo(char* line, S_SEARCHINFO *info, S_BOARD *pos);
 //extern void ParsePosition(char* lineIn, S_BOARD *pos);
 //extern void Uci_Loop(S_BOARD *pos, S_SEARCHINFO *info);
+
+//Sorcery.c
+extern void InitSorcery();
+extern uint64_t RookSquares(int square, uint64_t occupied);
+extern uint64_t BishopSquares(int square, uint64_t occupied);
+
+//tt.c
+extern void InitHashTable(S_HASHTABLE *table, int MB);
+extern int ProbeHashEntry(S_BOARD *pos, int *score, int alpha, int beta, int depth);
+extern void StoreHashEntry(S_BOARD *pos, int score, int flags, int depth);
 
 #endif

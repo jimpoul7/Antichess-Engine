@@ -1,21 +1,21 @@
 #include "defs.h"
+#include <time.h>
 
-int main() {
-
-	AllInit();
+void Play(int depth){
 
 	S_BOARD pos;
 	S_MOVE move;
 
 	ParseFen(START_FEN,&pos);
+	PrintBoard(&pos);
 
 	while(1){
 		if(pos.fiftyMove >= 100){
 			printf("Sergey\n");
 			break;
 		}
-		if(pos.side == WHITE){
-			move = FindMove(&pos,3);
+		if(1){
+			move = FindBestMove(&pos,depth);
 		}
 		else{
 			S_MOVELIST list;
@@ -34,12 +34,49 @@ int main() {
 			}
 		}
 		if(move.move == 0){
-			 printf("gg\n");
+			 if(pos.side == WHITE) printf("White wins!\n");
+			 else printf("Black wins!\n");
 			 break;
 		}
 		MakeMove(&pos,move.move);
 		PrintBoard(&pos);
 	}
+	printf("%ld Nodes,%d Hits, %d Cuts\n ",nodes,pos.HashTable->hit,pos.HashTable->cut);
+
+}
+
+void CheckMoveGen(){
+
+	S_BOARD pos;
+	int moves;
+	clock_t start;
+	FILE *fp1;
+	char fen[1024];
+
+	fp1 = fopen("perft.epd", "r");
+
+	for(int k = 0; k < 126; k++){
+		//S_MOVELIST list;
+		fgets(fen, 1024, fp1);
+		ParseFen(fen,&pos);
+		//GenerateAllMoves(&pos,&list);
+		//PrintMoveList(&list);
+		//abort();
+		for(int i = 1; i <= 7; i++){
+			start = clock();
+			moves = FindMoves(&pos, i);
+			printf("%d ", moves);
+			//printf("%lf ", ((double)clock()-start)/CLOCKS_PER_SEC);
+		}
+		printf("\n");
+	}
+}
+
+int main() {
+
+	AllInit();
+
+	Play(14);
 
 	return 0;
 }

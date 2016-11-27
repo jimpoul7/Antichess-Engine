@@ -2,336 +2,290 @@
 
 #define MOVE(f,t,ca,pro,fl) ( (f) | ((t) << 7) | ( (ca) << 14 ) | ( (pro) << 20 ) | (fl))
 #define SQOFFBOARD(sq) (FilesBrd[(sq)]==OFFBOARD)
+#define L1 ((uint64_t)1)
 
-const int LoopSlidePce[8] = {
- wB, wR, wQ, 0, bB, bR, bQ, 0
-};
+void AddMove(int move, int score, S_MOVELIST *list){
+  list->moves[list->count].score = score;
+  list->moves[list->count].move = move;
+  list->count++;
+}
 
-const int LoopNonSlidePce[6] = {
- wN, wK, 0, bN, bK, 0
-};
-
-const int LoopSlideIndex[2] = { 0, 4 };
-const int LoopNonSlideIndex[2] = { 0, 3 };
-
-const int PceDir[13][8] = {
-	{ 0, 0, 0, 0, 0, 0, 0 },
-	{ 0, 0, 0, 0, 0, 0, 0 },
-	{ -8, -19,	-21, -12, 8, 19, 21, 12 },
-	{ -9, -11, 11, 9, 0, 0, 0, 0 },
-	{ -1, -10,	1, 10, 0, 0, 0, 0 },
-	{ -1, -10,	1, 10, -9, -11, 11, 9 },
-	{ -1, -10,	1, 10, -9, -11, 11, 9 },
-	{ 0, 0, 0, 0, 0, 0, 0 },
-	{ -8, -19,	-21, -12, 8, 19, 21, 12 },
-	{ -9, -11, 11, 9, 0, 0, 0, 0 },
-	{ -1, -10,	1, 10, 0, 0, 0, 0 },
-	{ -1, -10,	1, 10, -9, -11, 11, 9 },
-	{ -1, -10,	1, 10, -9, -11, 11, 9 }
-};
-
-const int NumDir[13] = {
- 0, 0, 8, 4, 4, 8, 8, 0, 8, 4, 4, 8, 8
-};
-
-void addMove(S_MOVE move, S_MOVELIST *list){
-  if(list->capture){
-    if(CAPTURED(move.move)){
-      list->moves[list->count++] = move;
+void GenerateCaptures(const S_BOARD *pos, S_MOVELIST *list, uint64_t cap){
+  int sq, from, move;
+  uint64_t bbfrom, bbsq;
+  if(pos->side == WHITE) {
+    while(cap){
+      sq = PopBit(&cap);
+      bbsq;
+      bbsq = L1 << sq;
+      bbfrom = (BPawnEatSquares(bbsq) & pos->bitboards[wP] & (uint64_t)0x0000ffffffffffff) | (KingSquares(bbsq)  & pos->bitboards[wK]) | (KnightSquares(bbsq) & pos->bitboards[wN])
+          | (RookSquares(sq, pos->occupied[BOTH]) & (pos->bitboards[wR] | pos->bitboards[wQ])) | (BishopSquares(sq, pos->occupied[BOTH]) & (pos->bitboards[wB] | pos->bitboards[wQ]));
+      while(bbfrom){
+        from = PopBit(&bbfrom);
+        AddMove(MOVE(from, sq, pos->pieces[sq], EMPTY, 0), 0, list);
+      }
+      bbfrom = (BPawnEatSquares(bbsq) & pos->bitboards[wP] & (uint64_t)0x00ff000000000000);
+      while(bbfrom){
+        from = PopBit(&bbfrom);
+        AddMove(MOVE(from, sq, pos->pieces[sq], wK, 0), 0, list);
+        AddMove(MOVE(from, sq, pos->pieces[sq], wR, 0), 0, list);
+        AddMove(MOVE(from, sq, pos->pieces[sq], wN, 0), 0, list);
+        AddMove(MOVE(from, sq, pos->pieces[sq], wB, 0), 0, list);
+        AddMove(MOVE(from, sq, pos->pieces[sq], wQ, 0), 0, list);
+      }
     }
   }else{
-    if(CAPTURED(move.move)){
-      list->count = 1;
-      list->capture = 1;
-      list->moves[0] = move;
-    }else{
-      list->moves[list->count++] = move;
+    while(cap){
+      sq = PopBit(&cap);
+      bbsq;
+      bbsq = L1 << sq;
+      bbfrom = (WPawnEatSquares(bbsq) & pos->bitboards[bP] & (uint64_t)0xffffffffffff0000) | (KingSquares(bbsq)  & pos->bitboards[bK]) | (KnightSquares(bbsq) & pos->bitboards[bN])
+          | (RookSquares(sq, pos->occupied[BOTH]) & (pos->bitboards[bR] | pos->bitboards[bQ])) | (BishopSquares(sq, pos->occupied[BOTH]) & (pos->bitboards[bB] | pos->bitboards[bQ])) ;
+      while(bbfrom){
+        from = PopBit(&bbfrom);
+        AddMove(MOVE(from, sq, pos->pieces[sq], EMPTY, 0), 0, list);
+      }
+      bbfrom = (WPawnEatSquares(bbsq) & pos->bitboards[bP] & (uint64_t)0x000000000000ff00);
+      while(bbfrom){
+        from = PopBit(&bbfrom);
+        AddMove(MOVE(from, sq, pos->pieces[sq], bK, 0), 0, list);
+        AddMove(MOVE(from, sq, pos->pieces[sq], bR, 0), 0, list);
+        AddMove(MOVE(from, sq, pos->pieces[sq], bN, 0), 0, list);
+        AddMove(MOVE(from, sq, pos->pieces[sq], bB, 0), 0, list);
+        AddMove(MOVE(from, sq, pos->pieces[sq], bQ, 0), 0, list);
+      }
     }
   }
 }
 
+void GenerateMoves(const S_BOARD *pos, S_MOVELIST *list){
+  int to, from, move;
+  uint64_t bb, bbto;
+  if(pos->side == WHITE) {
+    bbto = WPawnMoveSquares(pos->bitboards[wP]) & (~pos->occupied[BOTH]) & (uint64_t)0x00ffffffffffffff;
+    bb = WPawnMoveSquares(bbto) & (~pos->occupied[BOTH]) & (uint64_t)0x00000000ff000000;
+    while(bbto){
+      to = PopBit(&bbto);
+      AddMove(MOVE(to-8, to, EMPTY, EMPTY, 0), 0, list);
+    }
+    while(bb){
+      to = PopBit(&bb);
+      AddMove(MOVE(to-16, to, EMPTY, EMPTY, MFLAGPS), 0, list);
+    }
 
+    bbto = WPawnMoveSquares(pos->bitboards[wP]) & (~pos->occupied[BOTH]) & (uint64_t)0xff00000000000000;
+    while(bbto){
+      to = PopBit(&bbto);
+      AddMove(MOVE(to-8, to, EMPTY, wK, 0), 0, list);
+      AddMove(MOVE(to-8, to, EMPTY, wR, 0), 0, list);
+      AddMove(MOVE(to-8, to, EMPTY, wK, 0), 0, list);
+      AddMove(MOVE(to-8, to, EMPTY, wB, 0), 0, list);
+      AddMove(MOVE(to-8, to, EMPTY, wQ, 0), 0, list);
+    }
 
-void GenerateAllMoves(const S_BOARD *pos, S_MOVELIST *list) {
+    bb = pos->bitboards[wK];
+    while(bb){
+      from = PopBit(&bb);
+      bbto = KingSquares(L1 << from) & (~pos->occupied[BOTH]);
+      while(bbto){
+        to = PopBit(&bbto);
+        AddMove(MOVE(from, to, EMPTY, EMPTY, 0), 0, list);
+      }
+    }
 
+    bb = pos->bitboards[wN];
+    while(bb){
+      from = PopBit(&bb);
+      bbto = KnightSquares(L1 << from) & (~pos->occupied[BOTH]);
+      while(bbto){
+        to = PopBit(&bbto);
+        AddMove(MOVE(from, to, EMPTY, EMPTY, 0), 0, list);
+      }
+    }
+
+    bb = pos->bitboards[wR];
+    while(bb){
+      from = PopBit(&bb);
+      bbto = RookSquares(from, pos->occupied[BOTH]) & (~pos->occupied[BOTH]);
+      while(bbto){
+        to = PopBit(&bbto);
+        AddMove(MOVE(from, to, EMPTY, EMPTY, 0), 0, list);
+      }
+    }
+
+    bb = pos->bitboards[wB];
+    while(bb){
+      from = PopBit(&bb);
+      bbto = BishopSquares(from, pos->occupied[BOTH]) & (~pos->occupied[BOTH]);
+      while(bbto){
+        to = PopBit(&bbto);
+        AddMove(MOVE(from, to, EMPTY, EMPTY, 0), 0, list);
+      }
+    }
+
+    bb = pos->bitboards[wQ];
+    while(bb){
+      from = PopBit(&bb);
+      bbto = (BishopSquares(from, pos->occupied[BOTH]) | RookSquares(from, pos->occupied[BOTH])) & (~pos->occupied[BOTH]);
+      while(bbto){
+        to = PopBit(&bbto);
+        AddMove(MOVE(from, to, EMPTY, EMPTY, 0), 0, list);
+      }
+    }
+
+  }else{
+    bbto = BPawnMoveSquares(pos->bitboards[bP]) & (~pos->occupied[BOTH]) & (uint64_t)0xffffffffffffff00;
+    bb = BPawnMoveSquares(bbto) & (~pos->occupied[BOTH]) & (uint64_t)0x000000ff00000000;
+    while(bbto){
+      to = PopBit(&bbto);
+      AddMove(MOVE(to+8, to, EMPTY, EMPTY, 0), 0, list);
+    }
+    while(bb){
+      to = PopBit(&bb);
+      AddMove(MOVE(to+16, to, EMPTY, EMPTY, MFLAGPS), 0, list);
+    }
+
+    bbto = BPawnMoveSquares(pos->bitboards[bP]) & (~pos->occupied[BOTH]) & (uint64_t)0x00000000000000ff;
+    while(bbto){
+      to = PopBit(&bbto);
+      AddMove(MOVE(to+8, to, EMPTY, bK, 0), 0, list);
+      AddMove(MOVE(to+8, to, EMPTY, bR, 0), 0, list);
+      AddMove(MOVE(to+8, to, EMPTY, bK, 0), 0, list);
+      AddMove(MOVE(to+8, to, EMPTY, bB, 0), 0, list);
+      AddMove(MOVE(to+8, to, EMPTY, bQ, 0), 0, list);
+    }
+
+    bb = pos->bitboards[bK];
+    while(bb){
+      from = PopBit(&bb);
+      bbto = KingSquares(L1 << from) & (~pos->occupied[BOTH]);
+      while(bbto){
+        to = PopBit(&bbto);
+        AddMove(MOVE(from, to, EMPTY, EMPTY, 0), 0, list);
+      }
+    }
+
+    bb = pos->bitboards[bN];
+    while(bb){
+      from = PopBit(&bb);
+      bbto = KnightSquares(L1 << from) & (~pos->occupied[BOTH]);
+      while(bbto){
+        to = PopBit(&bbto);
+        AddMove(MOVE(from, to, EMPTY, EMPTY, 0), 0, list);
+      }
+    }
+
+    bb = pos->bitboards[bR];
+    while(bb){
+      from = PopBit(&bb);
+      bbto = RookSquares(from, pos->occupied[BOTH]) & (~pos->occupied[BOTH]);
+      while(bbto){
+        to = PopBit(&bbto);
+        AddMove(MOVE(from, to, EMPTY, EMPTY, 0), 0, list);
+      }
+    }
+
+    bb = pos->bitboards[bB];
+    while(bb){
+      from = PopBit(&bb);
+      bbto = BishopSquares(from, pos->occupied[BOTH]) & (~pos->occupied[BOTH]);
+      while(bbto){
+        to = PopBit(&bbto);
+        AddMove(MOVE(from, to, EMPTY, EMPTY, 0), 0, list);
+      }
+    }
+
+    bb = pos->bitboards[bQ];
+    while(bb){
+      from = PopBit(&bb);
+      bbto = (BishopSquares(from, pos->occupied[BOTH]) | RookSquares(from, pos->occupied[BOTH])) & (~pos->occupied[BOTH]);
+      while(bbto){
+        to = PopBit(&bbto);
+        AddMove(MOVE(from, to, EMPTY, EMPTY, 0), 0, list);
+      }
+    }
+  }
+}
+
+uint64_t CaptureSquares(const S_BOARD *pos, int side){
+  uint64_t cap;
+  uint64_t sbb;
+  int sq;
+  if(side == WHITE){
+    cap = WPawnEatSquares(pos->bitboards[wP]) | KingSquares(pos->bitboards[wK]) | KnightSquares(pos->bitboards[wN]);
+
+    sbb = pos->bitboards[wR];
+    while(sbb){
+      sq = PopBit(&sbb);
+      cap |= RookSquares(sq, pos->occupied[BOTH]);
+    }
+
+    sbb = pos->bitboards[wB];
+    while(sbb){
+      sq = PopBit(&sbb);
+      cap |= BishopSquares(sq, pos->occupied[BOTH]);
+    }
+
+    sbb = pos->bitboards[wQ];
+    while(sbb){
+      sq = PopBit(&sbb);
+      cap |= BishopSquares(sq, pos->occupied[BOTH]) | RookSquares(sq, pos->occupied[BOTH]);
+    }
+
+  }else{
+    cap = BPawnEatSquares(pos->bitboards[bP]) | KingSquares(pos->bitboards[bK]) | KnightSquares(pos->bitboards[bN]);
+
+    sbb = pos->bitboards[bR];
+    while(sbb){
+      sq = PopBit(&sbb);
+      cap |= RookSquares(sq, pos->occupied[BOTH]);
+    }
+
+    sbb = pos->bitboards[bB];
+    while(sbb){
+      sq = PopBit(&sbb);
+      cap |= BishopSquares(sq, pos->occupied[BOTH]);
+    }
+
+    sbb = pos->bitboards[bQ];
+    while(sbb){
+      sq = PopBit(&sbb);
+      cap |= BishopSquares(sq, pos->occupied[BOTH]) | RookSquares(sq, pos->occupied[BOTH]);
+    }
+  }
+  return cap;
+}
+
+void GenerateAllMoves(const S_BOARD *pos, S_MOVELIST *list){
+  uint64_t bb;
   list->count = 0;
-  list->capture = 0;
-  S_MOVE move;
-  int i;
-  int pce = EMPTY;
-	int side = pos->side;
-	int sq = 0;
-  int t_sq = 0;
-	int pceNum = 0;
-	int dir = 0;
-	int index = 0;
-	int pceIndex = 0;
-
-  if(side == WHITE) {
-
-		for(pceNum = 0; pceNum < pos->pceNum[wP]; ++pceNum) {
-			sq = pos->pList[wP][pceNum];
-			//ASSERT(SqOnBoard(sq));
-
-			if(pos->pieces[sq + 10] == EMPTY) {
-        if(sq > H6){
-          move.move = MOVE(sq, sq + 10, pos->pieces[sq + 10], wN, 0);
-          move.score = 0;
-          addMove(move, list);
-          move.move = MOVE(sq, sq + 10, pos->pieces[sq + 10], wB, 0);
-          move.score = 0;
-          addMove(move, list);
-          move.move = MOVE(sq, sq + 10, pos->pieces[sq + 10], wR, 0);
-          move.score = 0;
-          addMove(move, list);
-          move.move = MOVE(sq, sq + 10, pos->pieces[sq + 10], wQ, 0);
-          move.score = 0;
-          addMove(move, list);
-          move.move = MOVE(sq, sq + 10, pos->pieces[sq + 10], wK, 0);
-          move.score = 0;
-          addMove(move, list);
-        }else{
-          move.move = MOVE(sq, sq + 10, pos->pieces[sq + 10], EMPTY, 0);
-          move.score = 0;
-          addMove(move, list);
-        }
-				if(RanksBrd[sq] == RANK_2 && pos->pieces[sq + 20] == EMPTY) {
-          move.move = MOVE(sq, sq + 20, pos->pieces[sq + 20], EMPTY, MFLAGPS);
-          move.score = 0;
-          addMove(move, list);
-				}
-			}
-
-			if(!SQOFFBOARD(sq + 9) && PieceCol[pos->pieces[sq + 9]] == BLACK) {
-        if(sq > H6){
-          move.move = MOVE(sq, sq + 9, pos->pieces[sq + 9], wB, 0);
-          move.score = 0;
-          addMove(move, list);
-          move.move = MOVE(sq, sq + 9, pos->pieces[sq + 9], wQ, 0);
-          move.score = 0;
-          addMove(move, list);
-          move.move = MOVE(sq, sq + 9, pos->pieces[sq + 9], wR, 0);
-          move.score = 0;
-          addMove(move, list);
-          move.move = MOVE(sq, sq + 9, pos->pieces[sq + 9], wN, 0);
-          move.score = 0;
-          addMove(move, list);
-          move.move = MOVE(sq, sq + 9, pos->pieces[sq + 9], wK, 0);
-          move.score = 0;
-          addMove(move, list);
-        }else{
-          move.move = MOVE(sq, sq + 9, pos->pieces[sq + 9], EMPTY, 0);
-          move.score = 0;
-          addMove(move, list);
-        }
-			}
-			if(!SQOFFBOARD(sq + 11) && PieceCol[pos->pieces[sq + 11]] == BLACK) {
-        if(sq > H6){
-          move.move = MOVE(sq, sq + 11, pos->pieces[sq + 11], wB, 0);
-          move.score = 0;
-          addMove(move, list);
-          move.move = MOVE(sq, sq + 11, pos->pieces[sq + 11], wQ, 0);
-          move.score = 0;
-          addMove(move, list);
-          move.move = MOVE(sq, sq + 11, pos->pieces[sq + 11], wR, 0);
-          move.score = 0;
-          addMove(move, list);
-          move.move = MOVE(sq, sq + 11, pos->pieces[sq + 11], wN, 0);
-          move.score = 0;
-          addMove(move, list);
-          move.move = MOVE(sq, sq + 11, pos->pieces[sq + 11], wK, 0);
-          move.score = 0;
-          addMove(move, list);
-        }else{
-          move.move = MOVE(sq, sq + 11, pos->pieces[sq + 11], EMPTY, 0);
-          move.score = 0;
-          addMove(move, list);
-        }
-			}
-
-			if(pos->enPas != NO_SQ) {
-				if(sq + 9 == pos->enPas) {
-          move.move = MOVE(sq, sq + 9, bP, EMPTY, MFLAGEP);
-          move.score = 0;
-          addMove(move, list);
-				}
-				if(sq + 11 == pos->enPas) {
-          move.move = MOVE(sq, sq + 11, bP, EMPTY, MFLAGEP);
-          move.score = 0;
-          addMove(move, list);
-				}
-			}
-		}
+  if(pos->side == WHITE){
+    if((pos->enPas != NO_SQ) && (bb = BPawnEatSquares(L1 << pos->enPas) & pos->bitboards[wP])){
+      int from;
+      while(bb){
+        from = PopBit(&bb);
+        AddMove(MOVE(from, pos->enPas, bP, EMPTY, MFLAGEP), 0, list);
+      }
+      bb = CaptureSquares(pos, WHITE) & pos->occupied[BLACK];
+      if(bb) GenerateCaptures(pos, list, bb);
+    }else{
+      bb = CaptureSquares(pos, WHITE) & pos->occupied[BLACK];
+      if(bb) GenerateCaptures(pos, list, bb);
+      else GenerateMoves(pos, list);
+    }
+  }else{
+    if((pos->enPas != NO_SQ) && (bb = WPawnEatSquares(L1 << pos->enPas) & pos->bitboards[bP])){
+      int from;
+      while(bb){
+        from = PopBit(&bb);
+        AddMove(MOVE(from, pos->enPas, wP, EMPTY, MFLAGEP), 0, list);
+      }
+      bb = CaptureSquares(pos, BLACK) & pos->occupied[WHITE];
+      if(bb) GenerateCaptures(pos, list, bb);
+    }else{
+      bb = CaptureSquares(pos, BLACK) & pos->occupied[WHITE];
+      if(bb) GenerateCaptures(pos, list, bb);
+      else GenerateMoves(pos, list);
+    }
   }
-  else{
-
-    for(pceNum = 0; pceNum < pos->pceNum[bP]; ++pceNum) {
-			sq = pos->pList[bP][pceNum];
-			//ASSERT(SqOnBoard(sq));
-
-			if(pos->pieces[sq - 10] == EMPTY) {
-
-        if(sq < A3){
-          move.move = MOVE(sq, sq - 10, pos->pieces[sq - 10], bN, 0);
-          move.score = 0;
-          addMove(move, list);
-          move.move = MOVE(sq, sq - 10, pos->pieces[sq - 10], bB, 0);
-          move.score = 0;
-          addMove(move, list);
-          move.move = MOVE(sq, sq - 10, pos->pieces[sq - 10], bR, 0);
-          move.score = 0;
-          addMove(move, list);
-          move.move = MOVE(sq, sq - 10, pos->pieces[sq - 10], bQ, 0);
-          move.score = 0;
-          addMove(move, list);
-          move.move = MOVE(sq, sq - 10, pos->pieces[sq - 10], bK, 0);
-          move.score = 0;
-          addMove(move, list);
-        }else{
-          move.move = MOVE(sq, sq - 10, pos->pieces[sq - 10], EMPTY, 0);
-          move.score = 0;
-          addMove(move, list);
-        }
-				if(RanksBrd[sq] == RANK_7 && pos->pieces[sq - 20] == EMPTY) {
-          move.move = MOVE(sq, sq - 20, pos->pieces[sq - 20], EMPTY, MFLAGPS);
-          move.score = 0;
-          addMove(move, list);
-				}
-			}
-
-      if(!SQOFFBOARD(sq - 9) && PieceCol[pos->pieces[sq - 9]] == WHITE) {
-        if(sq < A3){
-          move.move = MOVE(sq, sq - 9, pos->pieces[sq - 9], bB, 0);
-          move.score = 0;
-          addMove(move, list);
-          move.move = MOVE(sq, sq - 9, pos->pieces[sq - 9], bQ, 0);
-          move.score = 0;
-          addMove(move, list);
-          move.move = MOVE(sq, sq - 9, pos->pieces[sq - 9], bR, 0);
-          move.score = 0;
-          addMove(move, list);
-          move.move = MOVE(sq, sq - 9, pos->pieces[sq - 9], bN, 0);
-          move.score = 0;
-          addMove(move, list);
-          move.move = MOVE(sq, sq - 9, pos->pieces[sq - 9], bK, 0);
-          move.score = 0;
-          addMove(move, list);
-        }else{
-          move.move = MOVE(sq, sq - 9, pos->pieces[sq - 9], EMPTY, 0);
-          move.score = 0;
-          addMove(move, list);
-        }
-			}
-			if(!SQOFFBOARD(sq - 11) && PieceCol[pos->pieces[sq - 11]] == WHITE) {
-        if(sq < A3){
-          move.move = MOVE(sq, sq - 11, pos->pieces[sq - 11], bB, 0);
-          move.score = 0;
-          addMove(move, list);
-          move.move = MOVE(sq, sq - 11, pos->pieces[sq - 11], bQ, 0);
-          move.score = 0;
-          addMove(move, list);
-          move.move = MOVE(sq, sq - 11, pos->pieces[sq - 11], bR, 0);
-          move.score = 0;
-          addMove(move, list);
-          move.move = MOVE(sq, sq - 11, pos->pieces[sq - 11], bN, 0);
-          move.score = 0;
-          addMove(move, list);
-          move.move = MOVE(sq, sq - 11, pos->pieces[sq - 11], bK, 0);
-          move.score = 0;
-          addMove(move, list);
-        }else{
-          move.move = MOVE(sq, sq - 11, pos->pieces[sq - 11], EMPTY, 0);
-          move.score = 0;
-          addMove(move, list);
-        }
-			}
-
-			if(pos->enPas != NO_SQ) {
-				if(sq - 9 == pos->enPas) {
-          move.move = MOVE(sq, sq - 9, wP, EMPTY, MFLAGEP);
-          move.score = 0;
-          addMove(move, list);
-				}
-				if(sq - 11 == pos->enPas) {
-          move.move = MOVE(sq, sq - 11, wP, EMPTY, MFLAGEP);
-          move.score = 0;
-          addMove(move, list);
-				}
-			}
-		}
-  }
-  
-  /* Loop for slide pieces */
-	pceIndex = LoopSlideIndex[side];
-	pce = LoopSlidePce[pceIndex++];
-	while( pce != 0) {
-		//ASSERT(PieceValid(pce));
-
-		for(pceNum = 0; pceNum < pos->pceNum[pce]; ++pceNum) {
-			sq = pos->pList[pce][pceNum];
-			//ASSERT(SqOnBoard(sq));
-
-		for(index = 0; index < NumDir[pce]; ++index) {
-			dir = PceDir[pce][index];
-			t_sq = sq + dir;
-
-			while(!SQOFFBOARD(t_sq)) {
-			     if(pos->pieces[t_sq] != EMPTY) {
-			        if(PieceCol[pos->pieces[t_sq]] == (side ^ 1)) {
-                move.move = MOVE(sq, t_sq, pos->pieces[t_sq], EMPTY, 0);
-                move.score = 0;
-                addMove(move, list);
-					    }
-              break;
-            }
-            move.move = MOVE(sq, t_sq, pos->pieces[t_sq], EMPTY, 0);
-            move.score = 0;
-            addMove(move, list);
-					  t_sq += dir;
-			}
-		}
-		}
-
-		pce = LoopSlidePce[pceIndex++];
-	}
-
-	/* Loop for non slide */
-	pceIndex = LoopNonSlideIndex[side];
-	pce = LoopNonSlidePce[pceIndex++];
-
-	while( pce != 0) {
-		//ASSERT(PieceValid(pce));
-
-		for(pceNum = 0; pceNum < pos->pceNum[pce]; ++pceNum) {
-			sq = pos->pList[pce][pceNum];
-			//ASSERT(SqOnBoard(sq));
-
-			for(index = 0; index < NumDir[pce]; ++index) {
-				dir = PceDir[pce][index];
-				t_sq = sq + dir;
-
-				if(SQOFFBOARD(t_sq)) {
-					continue;
-				}
-
-				// BLACK ^ 1 == WHITE       WHITE ^ 1 == BLACK
-				if(pos->pieces[t_sq] != EMPTY) {
-					if( PieceCol[pos->pieces[t_sq]] == (side ^ 1)) {
-            move.move = MOVE(sq, t_sq, pos->pieces[t_sq], EMPTY, 0);
-            move.score = 0;
-						addMove(move, list);
-					}
-					continue;
-				}
-        move.move = MOVE(sq, t_sq, pos->pieces[t_sq], EMPTY, 0);
-        move.score = 0;
-        addMove(move, list);
-			}
-		}
-
-		pce = LoopNonSlidePce[pceIndex++];
-	}
-
-    //ASSERT(MoveListOk(list,pos));
-
 }

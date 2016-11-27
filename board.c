@@ -1,5 +1,3 @@
-//l9 - PieceVal //l23 - material // l133 - UpdateListsMaterial
-
 #include "defs.h"
 
 char PceChar[] = ".PNBRQKpnbrqk";
@@ -21,17 +19,12 @@ void UpdateListsMaterial(S_BOARD *pos) {
 		if(piece!=OFFBOARD && piece!= EMPTY) {
 			colour = PieceCol[piece];
 			pos->material[colour] += PieceVal[piece];
-			pos->pList[piece][pos->pceNum[piece]] = sq;
 			pos->pceNum[piece]++;
 
-			if(piece==wP) {
-				SETBIT(pos->pawns[WHITE],SQ64(sq));
-				SETBIT(pos->pawns[BOTH],SQ64(sq));
-			}
-      else if(piece==bP) {
-				SETBIT(pos->pawns[BLACK],SQ64(sq));
-				SETBIT(pos->pawns[BOTH],SQ64(sq));
-			}
+
+			SETBIT(pos->bitboards[piece],sq);
+			SETBIT(pos->occupied[BOTH],sq);
+			SETBIT(pos->occupied[PieceCol[piece]],sq);
 		}
 	}
 }
@@ -47,7 +40,6 @@ int ParseFen(char *fen, S_BOARD *pos) {
   int  count = 0;
   int  i = 0;
 	int  sq64 = 0;
-	int  sq120 = 0;
 
 	ResetBoard(pos);
 
@@ -93,9 +85,8 @@ int ParseFen(char *fen, S_BOARD *pos) {
 
 		for (i = 0; i < count; i++) {
       sq64 = rank * 8 + file;
-			sq120 = SQ120(sq64);
       if (piece != EMPTY) {
-        pos->pieces[sq120] = piece;
+        pos->pieces[sq64] = piece;
       }
 			file++;
     }
@@ -144,15 +135,15 @@ void ResetBoard(S_BOARD *pos) {
 	}
 
 	for(index = 0; index < 64; ++index) {
-		pos->pieces[SQ120(index)] = EMPTY;
+		pos->pieces[index] = EMPTY;
 	}
 
 	for(index = 0; index < 3; ++index) {
-		pos->pawns[index] = 0ULL;
+		pos->occupied[index] = 0ULL;
 	}
-
 	for(index = 0; index < 13; ++index) {
 		pos->pceNum[index] = 0;
+		pos->bitboards[index] = 0;
 	}
 
 	pos->side = BOTH;
@@ -163,6 +154,9 @@ void ResetBoard(S_BOARD *pos) {
 	pos->hisPly = 0;
 
 	pos->posKey = 0ULL;
+
+	pos->HashTable = malloc(sizeof(S_HASHTABLE));
+	InitHashTable(pos->HashTable, 1024);
 
 }
 

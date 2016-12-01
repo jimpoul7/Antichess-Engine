@@ -44,7 +44,106 @@ uint64_t BPawnJumpSquares(uint64_t b){
 	return (b >> 16) & 0xff00000000;
 }
 
+uint64_t CaptureSquares(const S_BOARD *pos, int side){
+  uint64_t cap;
+  uint64_t sbb;
+  int sq;
+  if(side == WHITE){
+    cap = WPawnEatSquares(pos->bitboards[wP]) | KingSquares(pos->bitboards[wK]) | KnightSquares(pos->bitboards[wN]);
 
+    sbb = pos->bitboards[wR];
+    while(sbb){
+      sq = PopBit(&sbb);
+      cap |= RookSquares(sq, pos->occupied[BOTH]);
+    }
+
+    sbb = pos->bitboards[wB];
+    while(sbb){
+      sq = PopBit(&sbb);
+      cap |= BishopSquares(sq, pos->occupied[BOTH]);
+    }
+
+    sbb = pos->bitboards[wQ];
+    while(sbb){
+      sq = PopBit(&sbb);
+      cap |= BishopSquares(sq, pos->occupied[BOTH]) | RookSquares(sq, pos->occupied[BOTH]);
+    }
+
+  }else{
+    cap = BPawnEatSquares(pos->bitboards[bP]) | KingSquares(pos->bitboards[bK]) | KnightSquares(pos->bitboards[bN]);
+
+    sbb = pos->bitboards[bR];
+    while(sbb){
+      sq = PopBit(&sbb);
+      cap |= RookSquares(sq, pos->occupied[BOTH]);
+    }
+
+    sbb = pos->bitboards[bB];
+    while(sbb){
+      sq = PopBit(&sbb);
+      cap |= BishopSquares(sq, pos->occupied[BOTH]);
+    }
+
+    sbb = pos->bitboards[bQ];
+    while(sbb){
+      sq = PopBit(&sbb);
+      cap |= BishopSquares(sq, pos->occupied[BOTH]) | RookSquares(sq, pos->occupied[BOTH]);
+    }
+  }
+  return cap;
+}
+
+uint64_t MoveSquares(const S_BOARD *pos, int side){
+
+  uint64_t move_sqs;
+  uint64_t bb;
+  int sq;
+  if(side == WHITE){
+    move_sqs = (WPawnMoveSquares(pos->bitboards[wP]) & (~pos->occupied[BOTH])) | (WPawnJumpSquares(pos->bitboards[wP]) & (~pos->occupied[BOTH]))
+                  | (KingSquares(pos->bitboards[wK]) & (~pos->occupied[BOTH])) | (KnightSquares(pos->bitboards[wN]) & (~pos->occupied[BOTH]));
+
+    bb = pos->bitboards[wB];
+    while(bb){
+      sq = PopBit(&bb);
+      move_sqs |= BishopSquares(sq, pos->occupied[BOTH]) & (~pos->occupied[BOTH]);
+    }
+
+    bb = pos->bitboards[wR];
+    while(bb){
+      sq = PopBit(&bb);
+      move_sqs |= RookSquares(sq, pos->occupied[BOTH]) & (~pos->occupied[BOTH]);
+    }
+
+    bb = pos->bitboards[wQ];
+    while(bb){
+      sq = PopBit(&bb);
+      move_sqs |= BishopSquares(sq, pos->occupied[BOTH]) & (~pos->occupied[BOTH]) | RookSquares(sq, pos->occupied[BOTH]) & (~pos->occupied[BOTH]);
+    }
+
+  }else{
+    move_sqs = (BPawnMoveSquares(pos->bitboards[bP]) & (~pos->occupied[BOTH])) | (BPawnJumpSquares(pos->bitboards[bP]) & (~pos->occupied[BOTH]))
+                  | (KingSquares(pos->bitboards[bK]) & (~pos->occupied[BOTH])) | (KnightSquares(pos->bitboards[bN]) & (~pos->occupied[BOTH]));
+
+    bb = pos->bitboards[bB];
+    while(bb){
+      sq = PopBit(&bb);
+      move_sqs |= BishopSquares(sq, pos->occupied[BOTH]) & (~pos->occupied[BOTH]);
+    }
+
+    bb = pos->bitboards[bR];
+    while(bb){
+      sq = PopBit(&bb);
+      move_sqs |= RookSquares(sq, pos->occupied[BOTH]) & (~pos->occupied[BOTH]);
+    }
+
+    bb = pos->bitboards[bQ];
+    while(bb){
+      sq = PopBit(&bb);
+      move_sqs |= BishopSquares(sq, pos->occupied[BOTH]) & (~pos->occupied[BOTH]) | RookSquares(sq, pos->occupied[BOTH]) & (~pos->occupied[BOTH]);
+    }
+  }
+  return move_sqs;
+}
 
 void PrintBitBoard(uint64_t bb) {
 

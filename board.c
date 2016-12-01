@@ -4,7 +4,7 @@ char PceChar[] = ".PNBRQKpnbrqk";
 char SideChar[] = "wb-";
 char RankChar[] = "12345678";
 char FileChar[] = "abcdefgh";
-int PieceVal[13]= { 0, -100, -500, -900, -300, -400, -50, -100, -500, -900, -300, -400, -50  };
+int PieceVal[13]= { 0, -200, -500, -700, -400, -400, -50, -200, -500, -700, -400, -400, -50  };
 int PieceCol[13] = { BOTH, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE,
 	BLACK, BLACK, BLACK, BLACK, BLACK, BLACK };
 
@@ -151,9 +151,18 @@ void ResetBoard(S_BOARD *pos) {
 	pos->fiftyMove = 0;
 
 	pos->ply = 0;
+	pos->age = 0;
 	pos->hisPly = 0;
 
 	pos->posKey = 0ULL;
+
+
+  for(int j = 0; j < 2; j++) {
+		for(int k = 0; k < MAXGAMEMOVES; k++) {
+			pos->captureKillers[j][k] = 0;
+			pos->quietKillers[j][k] = 0;
+		}
+	}
 
 	pos->HashTable = malloc(sizeof(S_HASHTABLE));
 	InitHashTable(pos->HashTable, 1024);
@@ -184,4 +193,17 @@ void PrintBoard(const S_BOARD *pos) {
 	printf("Side:%c\n",SideChar[pos->side]);
 	printf("enPas:%d\n",pos->enPas);
 	printf("PosKey:%lX\n\n",pos->posKey);
+}
+
+int IsRepetition(const S_BOARD *pos) {
+
+	int i = 0;
+
+	for(i = pos->hisPly - pos->fiftyMove; i < pos->hisPly-1; i++) {
+
+		if(pos->posKey == pos->history[i].posKey) {
+			return 1;
+		}
+	}
+	return 0;
 }

@@ -1,4 +1,5 @@
 #include "defs.h"
+#include <time.h>
 
 long int nodes = 0;
 
@@ -6,24 +7,26 @@ int minimax(S_BOARD *pos, int depth, int a, int b){
 
   nodes++;
 
+  __builtin_prefetch(pos->HashTable->pTable+(pos->posKey % pos->HashTable->numofEntries));
+
   if(pos->fiftyMove >= 100) return 0;
   //if(IsRepetition(pos)) return 0;
 
-  int abchanged = 0;
+  int bestmove = 0;
   S_MOVELIST list;
-
-  if( ProbeHashEntry(pos, &abchanged, a, b, depth) == 1 ) {
-		pos->HashTable->cut++;
-		return abchanged;
-	}
-  else{
-    abchanged = 0;
-  }
+  int hashmove;
   GenerateAllMoves(pos,&list);
   OrderMoves(&list);
+
+  if( ProbeHashEntry(pos, &hashmove, &bestmove, a, b, depth) == 1 ) {
+		pos->HashTable->cut++;
+		return bestmove;
+	}
+  else{
+    bestmove = 0;
+  }
   int num_of_moves = list.count;
   int move = 0;
-
 	if(pos->side == WHITE){
 		if(num_of_moves == 0){
 			return 200000000;
@@ -41,20 +44,28 @@ int minimax(S_BOARD *pos, int depth, int a, int b){
         if(cur < -100000000) cur++;
         if(cur >= b){
           UndoMove(pos);
-          StoreHashEntry(pos, b, HFBETA, depth);
+          if(CAPTURED(move)){
+            pos->captureKillers[1][pos->ply] = pos->captureKillers[0][pos->ply];
+            pos->captureKillers[0][pos->ply] = move;
+          }
+          else{
+            pos->quietKillers[1][pos->ply] = pos->quietKillers[0][pos->ply];
+            pos->quietKillers[0][pos->ply] = move;
+          }
+          StoreHashEntry(pos, move, b, HFBETA, depth);
           return b;
         }
 				if(cur > a){
            a = cur;
-           abchanged = 1;
+           bestmove = move;
         }
 				UndoMove(pos);
 			}
-      if(abchanged){
-        StoreHashEntry(pos, a, HFEXACT, depth);
+      if(bestmove){
+        StoreHashEntry(pos, bestmove, a, HFEXACT, depth);
       }
       else{
-        StoreHashEntry(pos, a, HFALPHA, depth);
+        StoreHashEntry(pos, NOMOVE, a, HFALPHA, depth);
       }
       return a;
 		}
@@ -76,20 +87,28 @@ int minimax(S_BOARD *pos, int depth, int a, int b){
         if(cur < -100000000) cur++;
         if(cur <= a){
           UndoMove(pos);
-          StoreHashEntry(pos, a, HFALPHA, depth);
+          if(CAPTURED(move)){
+            pos->captureKillers[1][pos->ply] = pos->captureKillers[0][pos->ply];
+            pos->captureKillers[0][pos->ply] = list.moves[i].move;
+          }
+          else{
+            pos->quietKillers[1][pos->ply] = pos->quietKillers[0][pos->ply];
+            pos->quietKillers[0][pos->ply] = list.moves[i].move;
+          }
+          StoreHashEntry(pos, move, a, HFALPHA, depth);
           return a;
         }
 				if(cur < b){
            b = cur;
-           abchanged = 1;
+           bestmove = move;
         }
 				UndoMove(pos);
 			}
-      if(abchanged){
-        StoreHashEntry(pos, b, HFEXACT, depth);
+      if(bestmove){
+        StoreHashEntry(pos, bestmove, b, HFEXACT, depth);
       }
       else{
-        StoreHashEntry(pos, b, HFBETA, depth);
+        StoreHashEntry(pos, NOMOVE, b, HFBETA, depth);
       }
 			return b;
     }
@@ -125,6 +144,7 @@ S_MOVE FindBestMove(S_BOARD *pos, int depth){
 			}
       bm.score = best;
       bm.move = best_move;
+      StoreHashEntry(pos, best_move, best, HFEXACT, depth);
       return bm;
 		}
 	}
@@ -148,9 +168,23 @@ S_MOVE FindBestMove(S_BOARD *pos, int depth){
 			}
       bm.score = best;
       bm.move = best_move;
+      StoreHashEntry(pos, best_move, best, HFEXACT, depth);
       return bm;
     }
   }
+
+}
+
+S_MOVE Ids(S_BOARD *pos, int depth) {
+
+  S_MOVE move;
+
+  for(int i=1; i<=depth; i++){
+    move = FindBestMove(pos,i);
+    if(move.move != NOMOVE) printf("Depth: %d Best move: %s\n",i,PrMove2(pos, move.move));
+  }
+
+  return move;
 
 }
 
@@ -180,19 +214,6 @@ int FindMoves(S_BOARD *pos, int depth){
   return total;
 }
 
-int IsRepetition(const S_BOARD *pos) {
-
-	int i = 0;
-
-	for(i = pos->hisPly - pos->fiftyMove; i < pos->hisPly-1; i++) {
-
-		if(pos->posKey == pos->history[i].posKey) {
-			return 1;
-		}
-	}
-	return 0;
-}
-
 void OrderMoves(S_MOVELIST *list){
 
   S_MOVE tmp;
@@ -205,4 +226,24 @@ void OrderMoves(S_MOVELIST *list){
       j--;
     }
   }
+}
+
+void PrintPvline(S_BOARD *pos){
+
+  int move,index;
+  uint64_t tag;
+
+  index = pos->posKey % pos->HashTable->numofEntries;
+  tag = pos->HashTable->pTable[index].posKey;
+  move = pos->HashTable->pTable[index].move;
+
+  if(move && tag == pos->posKey && !IsRepetition(pos)){
+    if(pos->side == BLACK) printf("...%s ",PrMove2(pos, move));
+    else printf("%d. %s",pos->ply/2+1, PrMove2(pos, move));
+    //printf("%s\n",PrMove(move));
+    MakeMove(pos,move);
+    PrintPvline(pos);
+    UndoMove(pos);
+  }
+
 }

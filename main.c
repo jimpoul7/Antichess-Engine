@@ -1,12 +1,17 @@
 #include "defs.h"
 #include <time.h>
 
-void Play(int depth){
+void Play(){
 
 	S_BOARD pos;
 	S_MOVE move;
+	int depth;
 
 	ParseFen(START_FEN,&pos);
+
+	printf("Give depth:");
+	scanf("%d",&depth);
+
 	PrintBoard(&pos);
 
 	while(1){
@@ -14,8 +19,16 @@ void Play(int depth){
 			printf("Sergey\n");
 			break;
 		}
-		if(1){
-			move = FindBestMove(&pos,depth);
+		if(pos.side == WHITE){
+			S_MOVELIST list;
+			GenerateAllMoves(&pos,&list);
+			int n;
+			if(list.count == 1){
+				move = list.moves[0];
+			}
+			else{
+				move = Ids(&pos,depth);
+			}
 		}
 		else{
 			S_MOVELIST list;
@@ -26,7 +39,7 @@ void Play(int depth){
 			}
 			else{
 				for(int i = 0; i < list.count; i++) {
-					printf("#%d:%s\n",i,PrMove(list.moves[i].move));
+					printf("#%d:\t%s\n",i,PrMove2(&pos, list.moves[i].move));
 				}
 				printf("Give move:");
 				scanf("%d",&n);
@@ -38,10 +51,15 @@ void Play(int depth){
 			 else printf("Black wins!\n");
 			 break;
 		}
+		//PrintPvline(&pos);
 		MakeMove(&pos,move.move);
+		pos.age++;
 		PrintBoard(&pos);
+		printf("score %d\n", move.score);
+		PrintPvline(&pos);
+		printf("\n");
 	}
-	printf("%ld Nodes,%d Hits, %d Cuts\n ",nodes,pos.HashTable->hit,pos.HashTable->cut);
+	printf("%ld Nodes, %ld Hits, %ld Cuts, %ld Overwrites, %ld No-writes\n",nodes,pos.HashTable->hit,pos.HashTable->cut,pos.HashTable->overWrite,pos.HashTable->noWrite);
 
 }
 
@@ -76,8 +94,18 @@ int main() {
 
 	AllInit();
 
-	Play(10);
+	//Play();
+
 	//CheckMoveGen();
+
+	uint64_t bb;
+	S_BOARD pos;
+
+	ParseFen("r4b1r/pp1nnp1p/3k4/8/8/1P1P1P2/P6P/1R2K2R w - - 0 1",&pos);
+
+	bb = MoveSquares(&pos,BLACK);
+	PrintBitBoard(bb);
+	printf("Mobility: %d\n",Mobility(&pos,BLACK));
 
 	return 0;
 }

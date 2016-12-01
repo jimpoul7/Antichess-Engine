@@ -13,7 +13,7 @@ char *PrSq(const int sq) {
 
 }
 
-char *PrMove(const int move) {
+char *PrMove(int move) {
 
 	static char MvStr[6];
   char pchar;
@@ -45,6 +45,98 @@ char *PrMove(const int move) {
 	}
   else {
 		sprintf(MvStr, "%c%c%c%c", ('a'+ff), ('1'+rf), ('a'+ft), ('1'+rt));
+	}
+
+  return MvStr;
+
+}
+
+char *PrMove2(S_BOARD *pos, int move) {
+
+	static char MvStr[12];
+  char pchar;
+
+	int ff = FilesBrd[FROMSQ(move)];
+	int rf = RanksBrd[FROMSQ(move)];
+	int ft = FilesBrd[TOSQ(move)];
+	int rt = RanksBrd[TOSQ(move)];
+
+	int promoted = PROMOTED(move);
+
+  if(promoted) {
+    if( promoted == wQ || promoted ==bQ ){
+      pchar = 'Q';
+    }
+    else if( promoted == wK || promoted ==bK){
+      pchar = 'K';
+    }
+    else if( promoted == wR || promoted ==bR){
+      pchar = 'R';
+    }
+    else if( promoted == wN || promoted ==bN){
+      pchar = 'N';
+    }
+    else if( promoted == wB || promoted ==bB){
+      pchar = 'B';
+    }
+		if(CAPTURED(move)) sprintf(MvStr, "%cx%c%c=%c", ('a'+ff), ('a'+ft), ('1'+rt), pchar);
+		else sprintf(MvStr, "%c%c=%c", ('a'+ft), ('1'+rt), pchar);
+
+	}
+  else {
+		if(pos->pieces[FROMSQ(move)] == wP || pos->pieces[FROMSQ(move)] == bP){
+			if(CAPTURED(move)) sprintf(MvStr, "%cx%c%c", ('a'+ff), ('a'+ft), ('1'+rt));
+			else sprintf(MvStr, "%c%c", ('a'+ft), ('1'+rt));
+		}else{
+			uint64_t fromCands = 0;
+			if(pos->pieces[FROMSQ(move)] == wK){
+				fromCands = KingSquares(1UL << TOSQ(move)) & pos->bitboards[wK];
+				MvStr[0] = 'K';
+			}else if(pos->pieces[FROMSQ(move)] == bK){
+				fromCands = KingSquares(1UL << TOSQ(move)) & pos->bitboards[bK];
+				MvStr[0] = 'K';
+			}else if(pos->pieces[FROMSQ(move)] == wN){
+				fromCands = KnightSquares(1UL << TOSQ(move)) & pos->bitboards[wN];
+				MvStr[0] = 'N';
+			}else if(pos->pieces[FROMSQ(move)] == bN){
+				fromCands = KnightSquares(1UL << TOSQ(move)) & pos->bitboards[bN];
+				MvStr[0] = 'N';
+			}
+			else if(pos->pieces[FROMSQ(move)] == wR){
+				fromCands = RookSquares(TOSQ(move), pos->occupied[BOTH]) & pos->bitboards[wR];
+				MvStr[0] = 'R';
+			}else if(pos->pieces[FROMSQ(move)] == bR){
+				fromCands = RookSquares(TOSQ(move), pos->occupied[BOTH]) & pos->bitboards[bR];
+				MvStr[0] = 'R';
+			}
+			else if(pos->pieces[FROMSQ(move)] == wB){
+				fromCands = BishopSquares(TOSQ(move), pos->occupied[BOTH]) & pos->bitboards[wB];
+				MvStr[0] = 'B';
+			}else if(pos->pieces[FROMSQ(move)] == bB){
+				fromCands = BishopSquares(TOSQ(move), pos->occupied[BOTH]) & pos->bitboards[bB];
+				MvStr[0] = 'B';
+			}
+			else if(pos->pieces[FROMSQ(move)] == wQ){
+				fromCands = (BishopSquares(TOSQ(move), pos->occupied[BOTH]) | RookSquares(TOSQ(move), pos->occupied[BOTH])) & pos->bitboards[wQ];
+				MvStr[0] = 'Q';
+			}else{
+				fromCands = (BishopSquares(TOSQ(move), pos->occupied[BOTH]) | RookSquares(TOSQ(move), pos->occupied[BOTH])) & pos->bitboards[bQ];
+				MvStr[0] = 'Q';
+			}
+			if(CountBits(fromCands) == 1){
+				if(CAPTURED(move)) sprintf(MvStr+1, "x%c%c", ('a'+ft), ('1'+rt));
+				else sprintf(MvStr+1, "%c%c", ('a'+ft), ('1'+rt));
+			}else if(CountBits(fromCands & (0x0101010101010101UL << ff)) == 1){
+				if(CAPTURED(move)) sprintf(MvStr+1, "%cx%c%c", ('a'+ff), ('a'+ft), ('1'+rt));
+				else sprintf(MvStr+1, "%c%c%c", ('a'+ff), ('a'+ft), ('1'+rt));
+			}else if(CountBits(fromCands & (0x00000000000000ffUL << rf*8)) == 1){
+				if(CAPTURED(move)) sprintf(MvStr+1, "%cx%c%c", ('1'+rf), ('a'+ft), ('1'+rt));
+				else sprintf(MvStr+1, "%c%c%c", ('1'+rf), ('a'+ft), ('1'+rt));
+			}else{
+				if(CAPTURED(move)) sprintf(MvStr+1, "%c%cx%c%c", ('a'+ff), ('1'+rf), ('a'+ft), ('1'+rt));
+				else sprintf(MvStr+1, "%c%c%c%c", ('a'+ff), ('1'+rf), ('a'+ft), ('1'+rt));
+			}
+		}
 	}
 
   return MvStr;

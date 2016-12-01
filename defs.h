@@ -11,10 +11,11 @@
 
 #define MAXGAMEMOVES 2048
 #define MAXPOSITIONMOVES 256
-#define MAXDEPTH 64
+#define MAXDEPTH 256
 #define MAX_HASH 1024
 
 #define START_FEN  "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w - - 0 1"
+#define FEN_E3 "rnbqkbnr/pppppppp/8/8/8/4P3/PPPP1PPP/RNBQKBNR b - - 0 1"
 
 enum { EMPTY, wP, wN, wB, wR, wQ, wK, bP, bN, bB, bR, bQ, bK  };
 enum { FILE_A, FILE_B, FILE_C, FILE_D, FILE_E, FILE_F, FILE_G, FILE_H, FILE_NONE };
@@ -37,41 +38,38 @@ enum { HFNONE, HFALPHA, HFBETA, HFEXACT};
 
 typedef struct {
 	uint64_t posKey;
-	//int move;
+	int move;
 	int score;
 	int depth;
 	int flags;
+  int age;
 } S_HASHENTRY;
 
 typedef struct {
 	S_HASHENTRY *pTable;
 	int numofEntries;
-	int newWrite;
-	int overWrite;
-	int hit;
-	int cut;
+	long int newWrite;
+	long int overWrite;
+  long int noWrite;
+	long int hit;
+	long int cut;
 } S_HASHTABLE;
 
 typedef struct {
-
 	int move;
 	int score;
-
 } S_MOVE;
 
 typedef struct {
 	S_MOVE moves[MAXPOSITIONMOVES];
 	int count;
-  int capture;
 } S_MOVELIST;
 
 typedef struct {
-
   int move;
   int fiftyMove;
   int enPas;
   uint64_t posKey;
-
 } S_UNDO;
 
 typedef struct {
@@ -85,13 +83,15 @@ typedef struct {
   int enPas;
   int fiftyMove;
 
-  int ply;
+  int ply, age;
   int hisPly;
 
   uint64_t posKey;
 
   int pceNum[13];
   int material[2];
+  int captureKillers[2][MAXGAMEMOVES];
+  int quietKillers[2][MAXGAMEMOVES];
 
   S_UNDO history[MAXGAMEMOVES];
   S_HASHTABLE *HashTable;
@@ -187,25 +187,28 @@ extern uint64_t WPawnMoveSquares(uint64_t b);
 extern uint64_t BPawnMoveSquares(uint64_t b);
 extern uint64_t WPawnJumpSquares(uint64_t b);
 extern uint64_t BPawnJumpSquares(uint64_t b);
+uint64_t CaptureSquares(const S_BOARD *pos, int side);
+uint64_t MoveSquares(const S_BOARD *pos, int side);
 
 //board.c
 extern void ResetBoard(S_BOARD *pos);
 extern void PrintBoard(const S_BOARD *pos);
 extern int  ParseFen(char *fen, S_BOARD *pos);
 void UpdateListsMaterial(S_BOARD *pos);
+extern int IsRepetition(const S_BOARD *pos);
 
 //hashkeys.c
 extern uint64_t GeneratePosKey(const S_BOARD *pos);
 
 // move.c
-extern char *PrMove(const int move);
+extern char *PrMove(int move);
+extern char *PrMove2(S_BOARD *pos, int move);
 extern char *PrSq(const int sq);
 extern void PrintMoveList(const S_MOVELIST *list);
 extern int ParseMove(char *ptrChar, S_BOARD *pos);
 
 // movegen.c
 void GenerateAllMoves(const S_BOARD *pos, S_MOVELIST *list);
-uint64_t CaptureSquares(const S_BOARD *pos, int side);
 
 // makemove.c
 extern void MakeMove(S_BOARD *pos, int move);
@@ -213,12 +216,14 @@ extern void UndoMove(S_BOARD *pos);
 
 //evaluation.c
 extern int Eval(S_BOARD *pos);
+extern int Mobility(S_BOARD *pos, int side);
 
 //search.c
 extern S_MOVE FindBestMove(S_BOARD *pos, int depth);
 extern int FindMoves(S_BOARD *pos, int i);
-extern int IsRepetition(const S_BOARD *pos);
 extern void OrderMoves(S_MOVELIST *list);
+extern void PrintPvline(S_BOARD *pos);
+extern S_MOVE Ids(S_BOARD *pos, int depth);
 
 //uci.c
 //extern void ParseGo(char* line, S_SEARCHINFO *info, S_BOARD *pos);
@@ -231,8 +236,7 @@ extern uint64_t RookSquares(int square, uint64_t occupied);
 extern uint64_t BishopSquares(int square, uint64_t occupied);
 
 //tt.c
-extern void InitHashTable(S_HASHTABLE *table, int MB);
-extern int ProbeHashEntry(S_BOARD *pos, int *score, int alpha, int beta, int depth);
-extern void StoreHashEntry(S_BOARD *pos, int score, int flags, int depth);
-
+extern void InitHashTable(S_HASHTABLE *table, size_t MB);
+extern int ProbeHashEntry(S_BOARD *pos, int *move, int *score, int alpha, int beta, int depth);
+extern void StoreHashEntry(S_BOARD *pos, int move, int score, int flags, int depth);
 #endif

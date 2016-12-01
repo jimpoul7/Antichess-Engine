@@ -4,7 +4,22 @@
 #define SQOFFBOARD(sq) (FilesBrd[(sq)]==OFFBOARD)
 #define L1 ((uint64_t)1)
 
-void AddMove(int move, int score, S_MOVELIST *list){
+void AddMove(const S_BOARD *pos, int move, int score, S_MOVELIST *list){
+
+  int index;
+  index = pos->posKey % pos->HashTable->numofEntries;
+
+  if(pos->HashTable->pTable[index].posKey == pos->posKey && pos->HashTable->pTable[index].move == move){
+  score = 100000;
+  }
+  else if(CAPTURED(move)){
+    if(pos->captureKillers[0][pos->ply] == move) score = 30000;
+    else if(pos->captureKillers[1][pos->ply] == move) score = 20000;
+  }
+  else{
+    if(pos->quietKillers[0][pos->ply] == move) score = 30000;
+    else if(pos->quietKillers[1][pos->ply] == move) score = 20000;
+  }
   list->moves[list->count].score = score;
   list->moves[list->count].move = move;
   list->count++;
@@ -25,18 +40,18 @@ void GenerateCaptures(const S_BOARD *pos, S_MOVELIST *list, uint64_t cap){
         from = PopBit(&bbfrom);
         if((L1 << sq) & atsq ) atsq_value = -PieceVal[pos->pieces[from]];
         else atsq_value = 0;
-        AddMove(MOVE(from, sq, pos->pieces[sq], EMPTY, 0), PieceVal[pos->pieces[sq]] + atsq_value, list);
+        AddMove(pos, MOVE(from, sq, pos->pieces[sq], EMPTY, 0), PieceVal[pos->pieces[sq]] + atsq_value, list);
       }
       bbfrom = (BPawnEatSquares(bbsq) & pos->bitboards[wP] & (uint64_t)0x00ff000000000000);
       while(bbfrom){
         from = PopBit(&bbfrom);
         if((L1 << sq) & atsq ) atsq_value = 0;
         else atsq_value = 0xffffffff;
-        AddMove(MOVE(from, sq, pos->pieces[sq], wK, 0), PieceVal[pos->pieces[sq]]+(atsq_value & PieceVal[wK])-PieceVal[wP], list);
-        AddMove(MOVE(from, sq, pos->pieces[sq], wR, 0), PieceVal[pos->pieces[sq]]+(atsq_value & PieceVal[wK])-PieceVal[wP], list);
-        AddMove(MOVE(from, sq, pos->pieces[sq], wN, 0), PieceVal[pos->pieces[sq]]+(atsq_value & PieceVal[wK])-PieceVal[wP], list);
-        AddMove(MOVE(from, sq, pos->pieces[sq], wB, 0), PieceVal[pos->pieces[sq]]+(atsq_value & PieceVal[wK])-PieceVal[wP], list);
-        AddMove(MOVE(from, sq, pos->pieces[sq], wQ, 0), PieceVal[pos->pieces[sq]]+(atsq_value & PieceVal[wK])-PieceVal[wP], list);
+        AddMove(pos, MOVE(from, sq, pos->pieces[sq], wK, 0), PieceVal[pos->pieces[sq]]+(atsq_value & PieceVal[wK])-PieceVal[wP], list);
+        AddMove(pos, MOVE(from, sq, pos->pieces[sq], wR, 0), PieceVal[pos->pieces[sq]]+(atsq_value & PieceVal[wK])-PieceVal[wP], list);
+        AddMove(pos, MOVE(from, sq, pos->pieces[sq], wN, 0), PieceVal[pos->pieces[sq]]+(atsq_value & PieceVal[wK])-PieceVal[wP], list);
+        AddMove(pos, MOVE(from, sq, pos->pieces[sq], wB, 0), PieceVal[pos->pieces[sq]]+(atsq_value & PieceVal[wK])-PieceVal[wP], list);
+        AddMove(pos, MOVE(from, sq, pos->pieces[sq], wQ, 0), PieceVal[pos->pieces[sq]]+(atsq_value & PieceVal[wK])-PieceVal[wP], list);
       }
     }
   }else{
@@ -51,18 +66,24 @@ void GenerateCaptures(const S_BOARD *pos, S_MOVELIST *list, uint64_t cap){
         from = PopBit(&bbfrom);
         if((L1 << sq) & atsq ) atsq_value = -PieceVal[pos->pieces[from]];
         else atsq_value = 0;
-        AddMove(MOVE(from, sq, pos->pieces[sq], EMPTY, 0), PieceVal[pos->pieces[sq]]+ atsq_value, list);
+        if(pos->captureKillers[0][pos->ply] == MOVE(from, sq, pos->pieces[sq], EMPTY, 0)) {
+      		AddMove(pos, MOVE(from, sq, pos->pieces[sq], EMPTY, 0), 30000, list);
+      	} else if(pos->captureKillers[1][pos->ply] == MOVE(from, sq, pos->pieces[sq], EMPTY, 0)) {
+      		AddMove(pos, MOVE(from, sq, pos->pieces[sq], EMPTY, 0), 20000, list);
+      	} else {
+      		AddMove(pos, MOVE(from, sq, pos->pieces[sq], EMPTY, 0), PieceVal[pos->pieces[sq]]+ atsq_value, list);
+      	}
       }
       bbfrom = (WPawnEatSquares(bbsq) & pos->bitboards[bP] & (uint64_t)0x000000000000ff00);
       while(bbfrom){
         from = PopBit(&bbfrom);
         if((L1 << sq) & atsq ) atsq_value = 0;
         else atsq_value = 0xffffffff;
-        AddMove(MOVE(from, sq, pos->pieces[sq], bK, 0), PieceVal[pos->pieces[sq]]+(atsq_value & PieceVal[wK])-PieceVal[wP], list);
-        AddMove(MOVE(from, sq, pos->pieces[sq], bR, 0), PieceVal[pos->pieces[sq]]+(atsq_value & PieceVal[wK])-PieceVal[wP], list);
-        AddMove(MOVE(from, sq, pos->pieces[sq], bN, 0), PieceVal[pos->pieces[sq]]+(atsq_value & PieceVal[wK])-PieceVal[wP], list);
-        AddMove(MOVE(from, sq, pos->pieces[sq], bB, 0), PieceVal[pos->pieces[sq]]+(atsq_value & PieceVal[wK])-PieceVal[wP], list);
-        AddMove(MOVE(from, sq, pos->pieces[sq], bQ, 0), PieceVal[pos->pieces[sq]]+(atsq_value & PieceVal[wK])-PieceVal[wP], list);
+        AddMove(pos, MOVE(from, sq, pos->pieces[sq], bK, 0), PieceVal[pos->pieces[sq]]+(atsq_value & PieceVal[wK])-PieceVal[wP], list);
+        AddMove(pos, MOVE(from, sq, pos->pieces[sq], bR, 0), PieceVal[pos->pieces[sq]]+(atsq_value & PieceVal[wK])-PieceVal[wP], list);
+        AddMove(pos, MOVE(from, sq, pos->pieces[sq], bN, 0), PieceVal[pos->pieces[sq]]+(atsq_value & PieceVal[wK])-PieceVal[wP], list);
+        AddMove(pos, MOVE(from, sq, pos->pieces[sq], bB, 0), PieceVal[pos->pieces[sq]]+(atsq_value & PieceVal[wK])-PieceVal[wP], list);
+        AddMove(pos, MOVE(from, sq, pos->pieces[sq], bQ, 0), PieceVal[pos->pieces[sq]]+(atsq_value & PieceVal[wK])-PieceVal[wP], list);
       }
     }
   }
@@ -79,13 +100,13 @@ void GenerateMoves(const S_BOARD *pos, S_MOVELIST *list){
       to = PopBit(&bbto);
       if((L1 << to) & atsq ) atsq_value = -PieceVal[wP];
       else atsq_value = 0;
-      AddMove(MOVE(to-8, to, EMPTY, EMPTY, 0), atsq_value, list);
+      AddMove(pos, MOVE(to-8, to, EMPTY, EMPTY, 0), atsq_value, list);
     }
     while(bb){
       to = PopBit(&bb);
       if((L1 << to) & atsq ) atsq_value = -PieceVal[wP];
       else atsq_value = 0;
-      AddMove(MOVE(to-16, to, EMPTY, EMPTY, MFLAGPS), atsq_value, list);
+      AddMove(pos, MOVE(to-16, to, EMPTY, EMPTY, MFLAGPS), atsq_value, list);
     }
 
     bbto = WPawnMoveSquares(pos->bitboards[wP]) & (~pos->occupied[BOTH]) & (uint64_t)0xff00000000000000;
@@ -93,11 +114,11 @@ void GenerateMoves(const S_BOARD *pos, S_MOVELIST *list){
       to = PopBit(&bbto);
       if((L1 << to) & atsq ) atsq_value = 0;
       else atsq_value = 0xffffffff;
-      AddMove(MOVE(to-8, to, EMPTY, wK, 0), (atsq_value & PieceVal[bK])-PieceVal[bP], list);
-      AddMove(MOVE(to-8, to, EMPTY, wR, 0), (atsq_value & PieceVal[bR])-PieceVal[bP], list);
-      AddMove(MOVE(to-8, to, EMPTY, wN, 0), (atsq_value & PieceVal[bN])-PieceVal[bP], list);
-      AddMove(MOVE(to-8, to, EMPTY, wB, 0), (atsq_value & PieceVal[bB])-PieceVal[bP], list);
-      AddMove(MOVE(to-8, to, EMPTY, wQ, 0), (atsq_value & PieceVal[bQ])-PieceVal[bP], list);
+      AddMove(pos, MOVE(to-8, to, EMPTY, wK, 0), (atsq_value & PieceVal[bK])-PieceVal[bP], list);
+      AddMove(pos, MOVE(to-8, to, EMPTY, wR, 0), (atsq_value & PieceVal[bR])-PieceVal[bP], list);
+      AddMove(pos, MOVE(to-8, to, EMPTY, wN, 0), (atsq_value & PieceVal[bN])-PieceVal[bP], list);
+      AddMove(pos, MOVE(to-8, to, EMPTY, wB, 0), (atsq_value & PieceVal[bB])-PieceVal[bP], list);
+      AddMove(pos, MOVE(to-8, to, EMPTY, wQ, 0), (atsq_value & PieceVal[bQ])-PieceVal[bP], list);
     }
 
     bb = pos->bitboards[wK];
@@ -108,7 +129,7 @@ void GenerateMoves(const S_BOARD *pos, S_MOVELIST *list){
         to = PopBit(&bbto);
         if((L1 << to) & atsq ) atsq_value = -PieceVal[wK];
         else atsq_value = 0;
-        AddMove(MOVE(from, to, EMPTY, EMPTY, 0), atsq_value, list);
+        AddMove(pos, MOVE(from, to, EMPTY, EMPTY, 0), atsq_value, list);
       }
     }
 
@@ -120,7 +141,7 @@ void GenerateMoves(const S_BOARD *pos, S_MOVELIST *list){
         to = PopBit(&bbto);
         if((L1 << to) & atsq ) atsq_value = -PieceVal[wN];
         else atsq_value = 0;
-        AddMove(MOVE(from, to, EMPTY, EMPTY, 0), atsq_value, list);
+        AddMove(pos, MOVE(from, to, EMPTY, EMPTY, 0), atsq_value, list);
       }
     }
 
@@ -132,7 +153,7 @@ void GenerateMoves(const S_BOARD *pos, S_MOVELIST *list){
         to = PopBit(&bbto);
         if((L1 << to) & atsq ) atsq_value = -PieceVal[wR];
         else atsq_value = 0;
-        AddMove(MOVE(from, to, EMPTY, EMPTY, 0), atsq_value, list);
+        AddMove(pos, MOVE(from, to, EMPTY, EMPTY, 0), atsq_value, list);
       }
     }
 
@@ -144,7 +165,7 @@ void GenerateMoves(const S_BOARD *pos, S_MOVELIST *list){
         to = PopBit(&bbto);
         if((L1 << to) & atsq ) atsq_value = -PieceVal[wB];
         else atsq_value = 0;
-        AddMove(MOVE(from, to, EMPTY, EMPTY, 0), atsq_value, list);
+        AddMove(pos, MOVE(from, to, EMPTY, EMPTY, 0), atsq_value, list);
       }
     }
 
@@ -156,7 +177,7 @@ void GenerateMoves(const S_BOARD *pos, S_MOVELIST *list){
         to = PopBit(&bbto);
         if((L1 << to) & atsq ) atsq_value = -PieceVal[wQ];
         else atsq_value = 0;
-        AddMove(MOVE(from, to, EMPTY, EMPTY, 0), atsq_value, list);
+        AddMove(pos, MOVE(from, to, EMPTY, EMPTY, 0), atsq_value, list);
       }
     }
 
@@ -167,13 +188,13 @@ void GenerateMoves(const S_BOARD *pos, S_MOVELIST *list){
       to = PopBit(&bbto);
       if((L1 << to) & atsq ) atsq_value = -PieceVal[wP];
       else atsq_value = 0;
-      AddMove(MOVE(to+8, to, EMPTY, EMPTY, 0), atsq_value, list);
+      AddMove(pos, MOVE(to+8, to, EMPTY, EMPTY, 0), atsq_value, list);
     }
     while(bb){
       to = PopBit(&bb);
       if((L1 << to) & atsq ) atsq_value = -PieceVal[wP];
       else atsq_value = 0;
-      AddMove(MOVE(to+16, to, EMPTY, EMPTY, MFLAGPS), atsq_value, list);
+      AddMove(pos, MOVE(to+16, to, EMPTY, EMPTY, MFLAGPS), atsq_value, list);
     }
 
     bbto = BPawnMoveSquares(pos->bitboards[bP]) & (~pos->occupied[BOTH]) & (uint64_t)0x00000000000000ff;
@@ -181,11 +202,11 @@ void GenerateMoves(const S_BOARD *pos, S_MOVELIST *list){
       to = PopBit(&bbto);
       if((L1 << to) & atsq ) atsq_value = 0;
       else atsq_value = 0xffffffff;
-      AddMove(MOVE(to+8, to, EMPTY, bK, 0), (atsq_value & PieceVal[bK])-PieceVal[bP], list);
-      AddMove(MOVE(to+8, to, EMPTY, bR, 0), (atsq_value & PieceVal[bR])-PieceVal[bP], list);
-      AddMove(MOVE(to+8, to, EMPTY, bN, 0), (atsq_value & PieceVal[bN])-PieceVal[bP], list);
-      AddMove(MOVE(to+8, to, EMPTY, bB, 0), (atsq_value & PieceVal[bB])-PieceVal[bP], list);
-      AddMove(MOVE(to+8, to, EMPTY, bQ, 0), (atsq_value & PieceVal[bQ])-PieceVal[bP], list);
+      AddMove(pos, MOVE(to+8, to, EMPTY, bK, 0), (atsq_value & PieceVal[bK])-PieceVal[bP], list);
+      AddMove(pos, MOVE(to+8, to, EMPTY, bR, 0), (atsq_value & PieceVal[bR])-PieceVal[bP], list);
+      AddMove(pos, MOVE(to+8, to, EMPTY, bN, 0), (atsq_value & PieceVal[bN])-PieceVal[bP], list);
+      AddMove(pos, MOVE(to+8, to, EMPTY, bB, 0), (atsq_value & PieceVal[bB])-PieceVal[bP], list);
+      AddMove(pos, MOVE(to+8, to, EMPTY, bQ, 0), (atsq_value & PieceVal[bQ])-PieceVal[bP], list);
     }
 
     bb = pos->bitboards[bK];
@@ -196,7 +217,7 @@ void GenerateMoves(const S_BOARD *pos, S_MOVELIST *list){
         to = PopBit(&bbto);
         if((L1 << to) & atsq ) atsq_value = -PieceVal[wK];
         else atsq_value = 0;
-        AddMove(MOVE(from, to, EMPTY, EMPTY, 0), atsq_value, list);
+        AddMove(pos, MOVE(from, to, EMPTY, EMPTY, 0), atsq_value, list);
       }
     }
 
@@ -208,7 +229,7 @@ void GenerateMoves(const S_BOARD *pos, S_MOVELIST *list){
         to = PopBit(&bbto);
         if((L1 << to) & atsq ) atsq_value = -PieceVal[wN];
         else atsq_value = 0;
-        AddMove(MOVE(from, to, EMPTY, EMPTY, 0), atsq_value, list);
+        AddMove(pos, MOVE(from, to, EMPTY, EMPTY, 0), atsq_value, list);
       }
     }
 
@@ -220,7 +241,7 @@ void GenerateMoves(const S_BOARD *pos, S_MOVELIST *list){
         to = PopBit(&bbto);
         if((L1 << to) & atsq ) atsq_value = -PieceVal[wR];
         else atsq_value = 0;
-        AddMove(MOVE(from, to, EMPTY, EMPTY, 0), atsq_value, list);
+        AddMove(pos, MOVE(from, to, EMPTY, EMPTY, 0), atsq_value, list);
       }
     }
 
@@ -232,7 +253,7 @@ void GenerateMoves(const S_BOARD *pos, S_MOVELIST *list){
         to = PopBit(&bbto);
         if((L1 << to) & atsq ) atsq_value = -PieceVal[wB];
         else atsq_value = 0;
-        AddMove(MOVE(from, to, EMPTY, EMPTY, 0), atsq_value, list);
+        AddMove(pos, MOVE(from, to, EMPTY, EMPTY, 0), atsq_value, list);
       }
     }
 
@@ -244,59 +265,10 @@ void GenerateMoves(const S_BOARD *pos, S_MOVELIST *list){
         to = PopBit(&bbto);
         if((L1 << to) & atsq ) atsq_value = -PieceVal[wQ];
         else atsq_value = 0;
-        AddMove(MOVE(from, to, EMPTY, EMPTY, 0), atsq_value, list);
+        AddMove(pos, MOVE(from, to, EMPTY, EMPTY, 0), atsq_value, list);
       }
     }
   }
-}
-
-uint64_t CaptureSquares(const S_BOARD *pos, int side){
-  uint64_t cap;
-  uint64_t sbb;
-  int sq;
-  if(side == WHITE){
-    cap = WPawnEatSquares(pos->bitboards[wP]) | KingSquares(pos->bitboards[wK]) | KnightSquares(pos->bitboards[wN]);
-
-    sbb = pos->bitboards[wR];
-    while(sbb){
-      sq = PopBit(&sbb);
-      cap |= RookSquares(sq, pos->occupied[BOTH]);
-    }
-
-    sbb = pos->bitboards[wB];
-    while(sbb){
-      sq = PopBit(&sbb);
-      cap |= BishopSquares(sq, pos->occupied[BOTH]);
-    }
-
-    sbb = pos->bitboards[wQ];
-    while(sbb){
-      sq = PopBit(&sbb);
-      cap |= BishopSquares(sq, pos->occupied[BOTH]) | RookSquares(sq, pos->occupied[BOTH]);
-    }
-
-  }else{
-    cap = BPawnEatSquares(pos->bitboards[bP]) | KingSquares(pos->bitboards[bK]) | KnightSquares(pos->bitboards[bN]);
-
-    sbb = pos->bitboards[bR];
-    while(sbb){
-      sq = PopBit(&sbb);
-      cap |= RookSquares(sq, pos->occupied[BOTH]);
-    }
-
-    sbb = pos->bitboards[bB];
-    while(sbb){
-      sq = PopBit(&sbb);
-      cap |= BishopSquares(sq, pos->occupied[BOTH]);
-    }
-
-    sbb = pos->bitboards[bQ];
-    while(sbb){
-      sq = PopBit(&sbb);
-      cap |= BishopSquares(sq, pos->occupied[BOTH]) | RookSquares(sq, pos->occupied[BOTH]);
-    }
-  }
-  return cap;
 }
 
 void GenerateAllMoves(const S_BOARD *pos, S_MOVELIST *list){
@@ -307,7 +279,7 @@ void GenerateAllMoves(const S_BOARD *pos, S_MOVELIST *list){
       int from;
       while(bb){
         from = PopBit(&bb);
-        AddMove(MOVE(from, pos->enPas, bP, EMPTY, MFLAGEP), -100, list);
+        AddMove(pos, MOVE(from, pos->enPas, bP, EMPTY, MFLAGEP), -100, list);
       }
       bb = CaptureSquares(pos, WHITE) & pos->occupied[BLACK];
       if(bb) GenerateCaptures(pos, list, bb);
@@ -321,7 +293,7 @@ void GenerateAllMoves(const S_BOARD *pos, S_MOVELIST *list){
       int from;
       while(bb){
         from = PopBit(&bb);
-        AddMove(MOVE(from, pos->enPas, wP, EMPTY, MFLAGEP), -100, list);
+        AddMove(pos, MOVE(from, pos->enPas, wP, EMPTY, MFLAGEP), -100, list);
       }
       bb = CaptureSquares(pos, BLACK) & pos->occupied[WHITE];
       if(bb) GenerateCaptures(pos, list, bb);

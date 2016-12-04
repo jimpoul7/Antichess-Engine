@@ -24,99 +24,99 @@ enum { RANK_1, RANK_2, RANK_3, RANK_4, RANK_5, RANK_6, RANK_7, RANK_8, RANK_NONE
 enum { WHITE, BLACK, BOTH };
 //enum { UCIMODE };
 enum {
-  A1 = 0, B1, C1, D1, E1, F1, G1, H1,
-  A2, B2, C2, D2, E2, F2, G2, H2,
-  A3, B3, C3, D3, E3, F3, G3, H3,
-  A4, B4, C4, D4, E4, F4, G4, H4,
-  A5, B5, C5, D5, E5, F5, G5, H5,
-  A6, B6, C6, D6, E6, F6, G6, H6,
-  A7, B7, C7, D7, E7, F7, G7, H7,
-  A8, B8, C8, D8, E8, F8, G8, H8, NO_SQ, OFFBOARD
+    A1 = 0, B1, C1, D1, E1, F1, G1, H1,
+    A2, B2, C2, D2, E2, F2, G2, H2,
+    A3, B3, C3, D3, E3, F3, G3, H3,
+    A4, B4, C4, D4, E4, F4, G4, H4,
+    A5, B5, C5, D5, E5, F5, G5, H5,
+    A6, B6, C6, D6, E6, F6, G6, H6,
+    A7, B7, C7, D7, E7, F7, G7, H7,
+    A8, B8, C8, D8, E8, F8, G8, H8, NO_SQ, OFFBOARD
 };
 
 enum { HFNONE, HFALPHA, HFBETA, HFEXACT};
 
 typedef struct {
-	uint64_t posKey;
-	int move;
-	int score;
-	int depth;
-	int flags;
-  int age;
+    uint64_t posKey;
+    int move;
+    int score;
+    int depth;
+    int flags;
+    int age;
 } S_HASHENTRY;
 
 typedef struct {
-	S_HASHENTRY *pTable;
-	int numofEntries;
-	long int newWrite;
-	long int overWrite;
-  long int noWrite;
-	long int hit;
-	long int cut;
+    S_HASHENTRY *pTable;
+    int numofEntries;
+    long int newWrite;
+    long int overWrite;
+    long int noWrite;
+    long int hit;
+    long int cut;
 } S_HASHTABLE;
 
 typedef struct {
-	int move;
-	int score;
+    int move;
+    int score;
 } S_MOVE;
 
 typedef struct {
-	S_MOVE moves[MAXPOSITIONMOVES];
-	int count;
+    S_MOVE moves[MAXPOSITIONMOVES];
+    int count;
 } S_MOVELIST;
 
 typedef struct {
-  int move;
-  int fiftyMove;
-  int enPas;
-  uint64_t posKey;
+    int move;
+    int fiftyMove;
+    int enPas;
+    uint64_t posKey;
 } S_UNDO;
 
 typedef struct {
 
-  int pieces[BRD_SQ_NUM];
+    int pieces[BRD_SQ_NUM];
 
-  uint64_t occupied[3];
-  uint64_t bitboards[13];
+    uint64_t occupied[3];
+    uint64_t bitboards[13];
 
-  int side;
-  int enPas;
-  int fiftyMove;
+    int side;
+    int enPas;
+    int fiftyMove;
 
-  int ply, age;
-  int hisPly;
+    int ply, age;
+    int hisPly;
 
-  uint64_t posKey;
+    uint64_t posKey;
 
-  int pceNum[13];
-  int material[2];
-  int captureKillers[2][MAXGAMEMOVES];
-  int quietKillers[2][MAXGAMEMOVES];
+    int pceNum[13];
+    int material[2];
+    int captureKillers[2][MAXGAMEMOVES];
+    int quietKillers[2][MAXGAMEMOVES];
 
-  S_UNDO history[MAXGAMEMOVES];
-  S_HASHTABLE *HashTable;
+    S_UNDO history[MAXGAMEMOVES];
+    S_HASHTABLE *HashTable;
 
 } S_BOARD;
 
 typedef struct {
 
-	int starttime;
-	int stoptime;
-	int depth;
-	int timeset;
-	int movestogo;
+    int starttime;
+    int stoptime;
+    int depth;
+    int timeset;
+    int movestogo;
 
-	long nodes;
+    long nodes;
 
-	int quit;
-	int stopped;
+    int quit;
+    int stopped;
 
-	float fh;
-	float fhf;
-	int nullCut;
+    float fh;
+    float fhf;
+    int nullCut;
 
-	int GAME_MODE;
-	int POST_THINKING;
+    int GAME_MODE;
+    int POST_THINKING;
 
 } S_SEARCHINFO;
 
@@ -201,14 +201,15 @@ extern int IsRepetition(const S_BOARD *pos);
 extern uint64_t GeneratePosKey(const S_BOARD *pos);
 
 // move.c
-extern char *PrMove(int move);
+//extern char *PrMove(int move);
 extern char *PrMove2(S_BOARD *pos, int move);
 extern char *PrSq(const int sq);
-extern void PrintMoveList(const S_MOVELIST *list);
+//extern void PrintMoveList(const S_MOVELIST *list);
 extern int ParseMove(char *ptrChar, S_BOARD *pos);
 
 // movegen.c
 void GenerateAllMoves(const S_BOARD *pos, S_MOVELIST *list);
+void GenerateCaptures(const S_BOARD *pos, S_MOVELIST *list, uint64_t cap);
 
 // makemove.c
 extern void MakeMove(S_BOARD *pos, int move);
@@ -224,6 +225,7 @@ extern int FindMoves(S_BOARD *pos, int i);
 extern void OrderMoves(S_MOVELIST *list);
 extern void PrintPvline(S_BOARD *pos);
 extern S_MOVE Ids(S_BOARD *pos, int depth);
+extern int Quiescence(S_BOARD *pos, int a, int b);
 
 //uci.c
 //extern void ParseGo(char* line, S_SEARCHINFO *info, S_BOARD *pos);
